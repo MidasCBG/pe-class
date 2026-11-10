@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="코트에서 직접 보는 초등 배드민턴 규칙과 기술">
+<title>배드민턴 교실</title>
+<link rel="stylesheet" href="./style.css?v=1.0.0">
+<script defer src="./app.js?v=1.0.0"></script>
+</head>
+<body>
+<div class="shell">
+  <header class="masthead">
+    <a class="brand" href="#court" aria-label="배드민턴 교실 첫 화면">
+      <span class="symbol" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M12 25 24 10M16 28 28 13M20 30 31 17M8 22l7 6m-7-6a4 4 0 0 0-1 5l3 3a4 4 0 0 0 5-1l5-6-8-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span>배드민턴 교실</span>
+    </a>
+    <button id="sound" class="sound" type="button" aria-pressed="false"></button>
+  </header>
+  <nav id="nav" class="chapters" aria-label="학습 주제"></nav>
+  <main class="lesson" id="lesson">
+    <section class="lesson-copy" aria-labelledby="heading">
+      <div class="lesson-heading">
+        <div>
+          <h1 id="heading"></h1>
+          <p class="lead" id="lead"></p>
+        </div>
+        <div class="setting"><span id="match-label">경기 방식</span><div id="match" class="segments" role="group" aria-labelledby="match-label"></div></div>
+      </div>
+      <div class="lesson-toolbar">
+        <div class="controls" id="controls"></div>
+        <div class="action-row" id="actions"></div>
+      </div>
+      <div class="insight" id="insight" role="status" aria-live="polite"></div>
+    </section>
+    <section class="demo" aria-label="코트와 시범">
+      <header class="demo-header"><span class="demo-index" id="demo-index"></span><span class="mode-note" id="demo-note"></span></header>
+      <div id="visual" class="visual"></div>
+      <div class="demo-footer" id="demo-footer"></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="version"></span></span>
+    <a href="https://www.badminton.no/contentassets/c0b5fd676d9a4a10bd7a14c673a7bad0/section-4.1---laws-of-badminton---26-april-2025-v5.0-1--1.pdf" target="_blank" rel="noopener">경기 규칙 출처 ↗</a>
+  </footer>
+</div>
+</body>
+</html>

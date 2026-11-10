@@ -1,0 +1,129 @@
+:root{color-scheme:light;--ink:#182521;--soft:#4b5b55;--line:#e3e9e5;--paper:#fff;--bg:#f5f7f5;--forest:#124b38;--lime:#d7f18d;--orange:#ffc281;--radius:22px;font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);background:var(--bg);font-size:16px;line-height:1.55;word-break:keep-all}
+button,a{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid #3c9f76;outline-offset:3px}
+a{color:inherit;text-decoration:none}
+.shell{max-width:1560px;min-height:100svh;margin:auto;padding:0 clamp(18px,3.2vw,56px);display:grid;grid-template-rows:auto auto 1fr auto}
+.masthead{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:62px}
+.brand{display:inline-flex;align-items:center;gap:11px;font-size:clamp(18px,1.7vw,24px);font-weight:780;letter-spacing:-.065em}
+.symbol{display:grid;place-items:center;width:41px;height:41px;border-radius:12px;color:var(--lime);background:#193a30}
+.symbol svg{width:31px;height:31px}
+.sound,.minor{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:44px;border:1px solid #dce5df;border-radius:12px;background:var(--paper);padding:0 14px;font-size:15px;font-weight:700;white-space:nowrap}
+.sound svg{width:19px;height:19px}
+.chapters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-bottom:1px solid #dce5df;gap:12px}
+.chapters a{display:flex;justify-content:center;align-items:center;min-height:50px;gap:10px;position:relative;color:var(--soft);font-size:clamp(15px,1.5vw,20px);font-weight:730;letter-spacing:-.045em}
+.chapters a span{font-size:12px;letter-spacing:.02em;color:#667b71;font-weight:750;font-variant-numeric:tabular-nums}
+.chapters a[aria-current]{color:#134a36}
+.chapters a[aria-current]::after{position:absolute;content:"";height:3px;inset:auto 0 -1px;background:#267654;border-radius:3px}
+.chapters a:hover{background:#ecf2ed}
+
+.setting{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:700;color:#43564e}
+.lesson[data-page=skills] .setting{display:none}
+.segments{display:flex;padding:3px;background:#e8eeea;border-radius:12px;gap:3px}
+.segments button{min-height:38px;min-width:65px;padding:0 12px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:720;color:#43564e}
+.segments button[aria-pressed=true]{background:white;color:#154c37;box-shadow:0 1px 3px #1535251d}
+.lesson{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:12px;padding-top:12px}
+.demo,.lesson-copy{border-radius:var(--radius);min-width:0}
+.demo{background:#172d27;color:#eef7ed;display:grid;grid-template-rows:auto auto auto;overflow:hidden}
+.demo-header,.demo-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px clamp(17px,2vw,28px);min-height:36px}
+.demo-header{border-bottom:1px solid #ffffff20}
+.demo-index{font-size:14px;font-weight:770;letter-spacing:.12em;color:#e0eecc}
+.mode-note{font-size:14px;font-weight:660;color:#deebdf}
+.demo-footer{justify-content:flex-start;flex-wrap:wrap;border-top:1px solid #ffffff20;color:#d3e3db;font-size:14px;font-weight:650}
+.legend{display:inline-flex;gap:7px;align-items:center}
+.legend i{width:16px;height:3px;border-radius:3px;background:#d7f18d}
+.legend .landing{height:9px;width:9px;border-radius:50%;background:#ffc281}
+.legend .net{background:#b5d2c7}
+.visual{min-width:0;position:relative;display:grid;place-items:center;padding:6px 12px}
+.visual > svg{display:block;width:min(100%,clamp(576px,calc((100svh - 392px) * 1.6),1040px));height:auto}
+.lesson-copy{background:var(--paper);border:1px solid var(--line);padding:clamp(12px,1.4vw,20px);display:grid;gap:8px}
+.lesson-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px}
+h1,p{margin:0}
+h1{font-size:clamp(28px,3vw,40px);letter-spacing:-.075em;line-height:1.14;font-weight:800}
+.lead{font-size:clamp(16px,1.5vw,20px);color:#46564f;letter-spacing:-.04em;line-height:1.5}
+.controls{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.lesson[data-page=skills] .lesson-copy{grid-template-columns:minmax(0,1fr) auto;align-items:center}
+.lesson[data-page=skills] .lesson-toolbar{display:contents}
+.lesson[data-page=skills] .lesson-heading,.lesson[data-page=skills] .controls{grid-column:1/-1}
+.lesson[data-page=skills] .controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.lesson[data-page=skills] .insight{grid-area:3/1}
+.lesson[data-page=skills] .action-row{grid-area:3/2}
+.option-group{min-width:0;margin:0;padding:4px 9px var(--option-bottom);border:1px solid var(--line);border-radius:12px}
+.option-group legend{padding:0 5px;color:var(--forest);font-size:15px;font-weight:780}
+.option-group:has(button[aria-pressed=true]){border-color:#a4c5ad;background:#f5faf5}
+.lesson-toolbar{--option-bottom:8px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px}
+.lesson:not([data-page=skills]) .action-row{margin-bottom:calc(var(--option-bottom) + 1px)}
+.lesson-toolbar .primary{min-height:44px}
+.lesson[data-page=score] .visual{min-height:250px}
+.options{display:flex;gap:6px;flex-wrap:wrap}
+.options button{min-height:44px;padding:4px 11px;border:1px solid #dfe8e1;border-radius:11px;background:white;color:#32463d;font-size:15px;font-weight:700;letter-spacing:-.035em}
+.options button[aria-pressed=true]{background:#e9f4eb;border-color:#98c1a5;color:#185339}
+.options button:hover,.minor:hover,.sound:hover{border-color:#71a389}
+.insight{background:#f0f4f0;border-left:3px solid #9db9a4;border-radius:3px 12px 12px 3px;padding:7px 11px;font-size:clamp(15px,1.43vw,19px);letter-spacing:-.035em;color:#2c4035}
+.insight strong{color:#1b5039;margin-right:7px}
+.insight[data-result=out]{background:#fff0e4;border-color:#e99659}
+.insight[data-result=out] strong{color:#83431c}
+.action-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.primary{display:inline-flex;align-items:center;gap:9px;padding:0 16px;min-height:48px;border:0;border-radius:12px;background:#164e3a;color:white;font-weight:760;font-size:16px;white-space:nowrap}
+.primary:hover{background:#216b50}
+.primary svg{width:17px;height:17px}
+.footer{min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#495c52;font-size:14px}
+.credit{display:flex;align-items:center;gap:8px;font-weight:750}
+.credit img{object-fit:cover;border-radius:7px}
+.version{color:#5b6e64;font-size:13px;font-variant-numeric:tabular-nums;font-weight:600}
+.footer a:hover{text-decoration:underline}
+.scoreboard{width:min(100%,860px);text-align:center;padding:12px}
+.score-pair{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(10px,2vw,26px)}
+.score-pair > span{font-size:clamp(28px,5vw,64px);font-weight:750;color:#d1e5d8}
+.score-team{background:#213d33;padding:12px;border:1px solid #ffffff25;border-radius:17px}
+.scoreboard small{display:block;font-size:clamp(16px,2.5vw,26px);line-height:1.2;color:#d1e5d8}
+.score-team strong{display:block;font-size:clamp(54px,12vw,158px);line-height:1.04;font-weight:750;letter-spacing:-.08em;font-variant-numeric:tabular-nums;color:#f5ffe9}
+.scoreboard p{margin:12px 0 4px;font-size:clamp(21px,4vw,38px);line-height:1.2;font-weight:750;color:#eef7ed}
+
+@media(max-width:1080px){.lesson[data-page=skills] .controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.lesson[data-page=skills] .lesson-copy{grid-template-columns:1fr}.lesson[data-page=skills] .action-row{grid-area:4/1}.visual > svg{width:100%}.chapters{gap:4px}}
+@media(max-width:560px){.shell{padding:0 12px}.brand{gap:6px}.symbol{height:32px;width:32px}.symbol svg{width:26px}.sound{padding:0 8px;font-size:13px}.chapters a{font-size:13px;min-height:52px;flex-direction:column;gap:0;line-height:1.4}.chapters a span{font-size:11px}.setting{gap:8px}.segments button{min-width:0;padding:0 8px}.demo,.lesson-copy{border-radius:16px}.lesson[data-page=skills] .controls{grid-template-columns:1fr}.footer{font-size:12px}}
+
+.skill-film,.film-cover{width:100%;max-width:740px;aspect-ratio:16/9;max-height:100%;border:0;border-radius:14px;background:#0b1c17}
+.skill-film{display:block}
+.film-cover{display:grid;align-content:center;justify-items:center;gap:16px;text-align:center;padding:22px;background:#21463a}
+.film-cover-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:50%;color:#d7f18d;background:#17342a}
+.film-cover-icon svg{width:26px;height:26px}
+.film-cover p{font-size:14px;color:#d3e3db;font-weight:700}
+.film-cover h2{font-size:clamp(22px,3vw,38px);line-height:1.3;margin:2px 0 0;letter-spacing:-.055em}
+.film-play{color:#1b3d30;background:#d7f18d}
+.film-play:hover{color:#1b3d30;background:#e6f6bc}
+@media(max-width:560px){.film-cover{gap:8px;padding:10px}.film-cover-icon{width:36px;height:36px}.film-cover-icon svg{width:20px;height:20px}}
+
+/* Keep the whole lesson in view on landscape classroom displays. */
+@media (min-width: 1000px) and (min-height: 620px){
+  .shell{height:100svh;grid-template-rows:auto auto minmax(min-content,1fr) auto}
+  .masthead{min-height:52px}
+  .chapters a{min-height:42px}
+  .lesson{grid-template-rows:auto minmax(0,1fr);align-content:stretch;gap:8px;padding-top:8px}
+  .lesson-copy{padding:9px 14px;gap:5px}
+  .lesson-heading{gap:4px 16px}
+  h1{font-size:clamp(27px,2.6vw,37px);line-height:1.08}
+  .lead,.insight{line-height:1.35}
+  .segments button{min-height:34px}
+  .lesson-toolbar{--option-bottom:5px}
+  .option-group{padding:2px 8px var(--option-bottom)}
+  .option-group legend{line-height:1.25}
+  .lesson[data-page=score] .options button{padding-inline:9px}
+  .options button,.action-row .primary,.action-row .minor{min-height:38px}
+  .insight{padding:6px 10px}
+  .footer{min-height:36px}
+  .demo{grid-template-rows:auto minmax(210px,1fr) auto}
+  .demo-header,.demo-footer{min-height:29px;padding-block:3px}
+  .visual,.lesson[data-page=score] .visual{container-type:size;min-height:0;padding:2px 10px}
+  .visual > svg{width:min(100%,1040px,160cqh)}
+  .skill-film,.film-cover{width:min(100%,740px,177.77cqh)}
+  .film-cover{gap:8px;padding:10px}
+  .film-cover-icon{width:40px;height:40px}
+  .scoreboard{padding:8px}
+  .score-team strong{font-size:clamp(56px,40cqh,170px)}
+  .scoreboard small{font-size:clamp(17px,7.5cqh,30px)}
+  .scoreboard p{margin-top:10px;font-size:clamp(22px,10cqh,44px)}
+}
