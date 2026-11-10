@@ -61,7 +61,9 @@ h1{font-size:clamp(28px,3vw,40px);letter-spacing:-.075em;line-height:1.14;font-w
 .options button{min-height:44px;padding:4px 11px;border:1px solid #dfe8e1;border-radius:11px;background:white;color:#32463d;font-size:15px;font-weight:700;letter-spacing:-.035em}
 .options button[aria-pressed=true]{background:#e9f4eb;border-color:#98c1a5;color:#185339}
 .options button:hover,.minor:hover,.sound:hover{border-color:#71a389}
-.insight{background:#f0f4f0;border-left:3px solid #9db9a4;border-radius:3px 12px 12px 3px;padding:7px 11px;font-size:clamp(15px,1.43vw,19px);letter-spacing:-.035em;color:#2c4035}
+.insight{display:grid;align-items:center;min-width:0;background:#f0f4f0;border-left:3px solid #9db9a4;border-radius:3px 12px 12px 3px;padding:6px 11px;font-size:clamp(15px,1.32vw,18px);line-height:1.32;letter-spacing:-.035em;color:#2c4035}
+.insight > div{grid-area:1/1;min-width:0}
+.note-space{visibility:hidden}
 .insight strong{color:#1b5039;margin-right:7px}
 .insight[data-result=out]{background:#fff0e4;border-color:#e99659}
 .insight[data-result=out] strong{color:#83431c}

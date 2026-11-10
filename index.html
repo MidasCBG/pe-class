@@ -3,13 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="코트에서 직접 보는 초등 배드민턴 규칙과 기술">
-<title>배드민턴 교실</title>
-<link rel="stylesheet" href="./style.css?v=1.0.0">
-<script defer src="./app.js?v=1.0.0"></script>
+<meta name="description" content="경기장과 시범으로 배우는 초등 체육 교실">
+<title>체육 교실</title>
+<link rel="stylesheet" href="./style.css?v=1.2.1-2">
+<link rel="stylesheet" href="./sports.css?v=1.2.1-2">
+<script defer src="./sports.js?v=1.2.1-2"></script>
+<script defer src="./app.js?v=1.2.1-2"></script>
+<script defer src="./ultimate.js?v=1.2.1-3"></script>
 </head>
 <body>
-<div class="shell">
+<div class="sports-layout">
+<aside class="sport-rail" aria-labelledby="sports-title">
+  <div class="pe-brand"><strong id="sports-title">체육 교실</strong><span>PE CLASS</span></div>
+  <nav class="sport-list" aria-label="스포츠 종목">
+    <a class="sport-pick racket" id="pick-badminton" href="#court" aria-current="true">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><path d="m11 27 11-15m-7 19 12-16m-8 20 12-16M8 26l11 8M8 26a5 5 0 0 0-1 7l3 2a5 5 0 0 0 7-1l4-6L11 21z"/></svg>
+      <span>배드민턴</span>
+    </a>
+    <a class="sport-pick disc" id="pick-ultimate" href="#ultimate/field">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="22" cy="17" rx="14" ry="6" transform="rotate(-20 22 17)"/><path d="M10 22c3 6 22 1 26-6M4 26h7m-7 5h13"/></svg>
+      <span>플라잉디스크<br>얼티밋</span>
+    </a>
+  </nav>
+</aside>
+<div class="shell sport-panel" id="badminton-panel">
   <header class="masthead">
     <a class="brand" href="#court" aria-label="배드민턴 교실 첫 화면">
       <span class="symbol" aria-hidden="true"><svg viewBox="0 0 36 36"><path d="M12 25 24 10M16 28 28 13M20 30 31 17M8 22l7 6m-7-6a4 4 0 0 0-1 5l3 3a4 4 0 0 0 5-1l5-6-8-6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -40,9 +57,37 @@
     </section>
   </main>
   <footer class="footer">
-    <span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="version"></span></span>
     <a href="https://www.badminton.no/contentassets/c0b5fd676d9a4a10bd7a14c673a7bad0/section-4.1---laws-of-badminton---26-april-2025-v5.0-1--1.pdf" target="_blank" rel="noopener">경기 규칙 출처 ↗</a>
   </footer>
+</div>
+<div class="shell sport-panel ultimate-panel" id="ultimate-panel" hidden>
+  <header class="masthead">
+    <a class="brand" href="#ultimate/field"><span class="symbol" aria-hidden="true">
+      <svg viewBox="0 0 40 40"><ellipse cx="21" cy="19" rx="14" ry="6" transform="rotate(-20 21 19)"/><path d="M9 24c3 6 22 1 26-6m-31 12h11"/></svg>
+    </span>플라잉디스크 얼티밋</a>
+  </header>
+  <nav class="chapters" id="ultimate-nav" aria-label="얼티밋 학습 주제"></nav>
+  <main class="lesson" id="ultimate-lesson">
+    <section class="lesson-copy" aria-labelledby="ultimate-heading">
+      <div class="lesson-heading"><div><h1 id="ultimate-heading"></h1><p class="lead" id="ultimate-lead"></p></div></div>
+      <div class="lesson-toolbar">
+        <div class="controls" id="ultimate-controls"></div>
+        <div class="action-row" id="ultimate-actions"></div>
+      </div>
+      <div class="insight" id="ultimate-insight" role="status"></div>
+    </section>
+    <section class="demo" aria-label="필드와 경기 시범">
+      <header class="demo-header"><span class="demo-index" id="ultimate-demo-index"></span><span class="mode-note" id="ultimate-result"></span></header>
+      <div class="visual ultimate-visual" id="ultimate-visual"></div>
+      <div class="demo-footer" id="ultimate-caption"></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <span>수업 자료 · 플라잉디스크 얼티밋 경기 규칙</span>
+    <a href="https://rules.wfdf.sport/" target="_blank" rel="noopener">WFDF 공식 규칙 ↗</a>
+  </footer>
+</div>
+<footer class="sport-credit"><span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="site-version">v1.2.1</span></span></footer>
 </div>
 </body>
 </html>

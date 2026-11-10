@@ -1,6 +1,5 @@
 "use strict";
 
-const VERSION = "v1.0.0";
 const pages = {
   court: {label:"코트와 선", visual:"코트 위에서", title:"어느 선을 볼까요?", lead:"랠리에서는 단식과 복식이 서로 다른 옆선을 써요.", cases:[
     ["선 안","선 안에 떨어지면 어느 쪽이 이길까요?",470,180,"인","코트 안에 떨어졌어요."],
@@ -81,6 +80,11 @@ function segments(items,key){
 }
 function go(){
   const [route, techniqueId] = location.hash.slice(1).split("/");
+  if(route === "ultimate"){
+    reset();
+    renderVisual();
+    return;
+  }
   const page = Object.hasOwn(pages,route) ? route : "court";
   if(page !== state.page){reset();state.page=page;state.case=0;}
   if(page === "skills" && techniqueId){
@@ -167,8 +171,8 @@ function placeShuttle(progress){
   const angle=Math.atan2(next.y-point.y,next.x-point.x)*180/Math.PI;
   shuttle.setAttribute("transform",`translate(${point.x} ${point.y}) rotate(${angle})`);
 }
-function scoreData(){
-  const step=state.scoreStep, max=state.yearMode, index=state.case;
+function scoreData(step=state.scoreStep){
+  const max=state.yearMode, index=state.case;
   if(index===2)return {a:max-1+step,b:max-1,tag:step===0?"동점 · 두 점 차가 필요해요":step===1?"한 점 차 · 랠리를 계속해요":"두 점 차 · 게임이 끝났어요",small:`한 게임 ${max}점제`};
   if(index===3)return {a:(max===21?29:20)+(step?1:0),b:max===21?29:20,tag:step?"다음 한 점으로 게임이 끝났어요":"다음 점수를 얻는 쪽이 이겨요",small:"점수 상한"};
   if(index===4)return {a:step,b:0,tag:step===2?"두 게임을 먼저 이겨 경기 승리!":"두 게임을 먼저 이기면 경기 승리",small:"이긴 게임 수"};
@@ -190,17 +194,24 @@ function watchSource(){
   const item=technique();
   $("visual").innerHTML=`<iframe class="skill-film" title="${item.name} 공개 시범" src="https://www.youtube-nocookie.com/embed/${item.youtube}?autoplay=1&mute=${state.sound?0:1}&rel=0&start=${item.start ?? 0}" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
 }
-function insight(){
+function renderInsight(){
+  const container=$("insight");
+  container.dataset.result="";
   if(state.page==="skills"){
-    const item=technique();
-    return {label:"따라 할 때",text:item.focus};
+    renderNotes(container,[["따라 할 때",technique().focus]],0);
+    return;
   }
   if(state.page==="score"){
     const lead=state.case===1&&isDouble()?"새 점수에 맞는 위치의 선수가 서브해요.":state.case===2?"동점 이후에는 한 점을 앞서도 계속해요.":"버튼을 눌러 점수와 서브권을 바꿔 보세요.";
-    return {label:"관찰하기",text:state.scoreStep?scoreData().tag:lead};
+    const notes=[lead,scoreData(1).tag];
+    if([2,4].includes(state.case))notes.push(scoreData(2).tag);
+    renderNotes(container,notes.map(text=>["관찰하기",text]),state.scoreStep);
+    return;
   }
   const shot=scenario();
-  return state.progress===1?{label:shot.end,text:shot.detail,out:["아웃","상대방의 득점"].includes(shot.end)}:{label:"관찰하기",text:shot.prompt};
+  const finished=state.progress===1;
+  container.dataset.result=finished&&["아웃","상대방의 득점"].includes(shot.end)?"out":"";
+  renderNotes(container,[["관찰하기",shot.prompt],[shot.end,shot.detail]],Number(finished));
 }
 function renderVisual(){
   if(state.page==="score")$("visual").innerHTML=scoreVisual();
@@ -210,11 +221,6 @@ function renderVisual(){
     $("visual").innerHTML=court({shot,serve:state.page==="serve"||shot.kind==="serve-net",progress:state.progress,fault:state.page==="faults"});
   }
   if(state.page!=="skills")placeShuttle(state.progress);
-}
-function renderInsight(){
-  const info=insight();
-  $("insight").dataset.result=info.out?"out":"";
-  $("insight").innerHTML="<strong>"+info.label+"</strong>"+info.text;
 }
 function render(){
   const page=currentPage();
@@ -228,8 +234,7 @@ function render(){
   $("lesson").dataset.page=state.page;
   $("heading").textContent=page.title;
   $("lead").textContent=page.lead;
-  $("version").textContent=VERSION;
-  $("demo-footer").innerHTML=state.page==="score"?"랠리를 이긴 쪽에 1점":state.page==="skills"?(technique().clip?"AI로 만든 시범 영상":"공개 실사 참고 영상"):'<span class="legend"><i></i>적용 경계선</span><span class="legend"><i class="net"></i>네트</span><span class="legend"><i class="landing"></i>착지점</span>';
+  $("demo-footer").innerHTML=state.page==="score"?"랠리를 이긴 쪽에 1점":state.page==="skills"?(technique().clip?"AI로 만든 시범 영상":captionGuide):'<span class="legend"><i></i>적용 경계선</span><span class="legend"><i class="net"></i>네트</span><span class="legend"><i class="landing"></i>착지점</span>';
   let controls="",actions="";
   if(state.page==="skills"){
     const item=technique();
