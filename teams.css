@@ -1,0 +1,110 @@
+:root{font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#182521;background:#f5f7f5;font-synthesis:none;--accent:#494c78;--line:#e0e5e2}
+*{box-sizing:border-box}
+body{margin:0;font-size:16px;line-height:1.45;word-break:keep-all}
+button,input,select{font:inherit}
+button{cursor:pointer;color:inherit;border:1px solid var(--line);border-radius:10px;background:#fff;min-height:38px;padding:6px 11px;font-weight:700}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #7179ba;outline-offset:2px}
+button:hover{border-color:#8c92b6}
+button:disabled{opacity:.45;cursor:default}
+input,select{border:1px solid #cad3cd;border-radius:8px;background:#fff;min-height:36px;padding:5px 8px;min-width:0;color:inherit}
+input[type=checkbox]{accent-color:var(--accent);min-height:auto;width:17px;height:17px}
+[hidden]{display:none!important}
+h1,h2,h3,p{margin:0}
+h1{font-size:clamp(25px,2.65vw,37px);line-height:1.13;letter-spacing:-.065em}
+h2{font-size:23px;letter-spacing:-.055em}
+h3{font-size:17px;letter-spacing:-.035em}
+.team-page{height:100svh;padding:16px clamp(16px,2.2vw,34px);display:flex;flex-direction:column;gap:12px}
+.page-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.eyebrow{font-size:11px;letter-spacing:.1em;font-weight:800;color:#647166;margin-bottom:5px}
+.local-badge{font-weight:750;font-size:14px;color:#3c654d;padding:7px 10px;background:#e7f0e6;border:1px solid #d1dfce;border-radius:10px;white-space:nowrap}
+.privacy{padding:10px 13px;border:1px solid #dce3dc;border-radius:12px;background:#edf2ed;color:#43564a;font-size:13px;line-height:1.45}
+.privacy strong{color:#285038}
+.notice:empty{display:none}
+.notice{font-size:14px;color:#733a20;background:#fff0df;border-radius:9px;padding:8px 12px}
+.workspace{min-height:0;flex:1;display:grid;grid-template-columns:minmax(320px,.95fr) minmax(400px,1.35fr);gap:14px}
+.card{border:1px solid var(--line);border-radius:20px;background:white;padding:16px;min-height:0;min-width:0;display:flex;flex-direction:column;gap:12px}
+.card-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#roster-count,#selected-count{font-size:14px;font-weight:650;color:#607266}
+.subtle{padding:3px 5px;min-height:32px;border:0;background:transparent;font-size:13px;color:#59685d}
+.primary{background:var(--accent);border-color:var(--accent);color:white}
+.primary:hover{background:#5b608e}
+.minor{font-size:14px}
+.roster-tools,#excel-tools{display:flex;flex-wrap:wrap;gap:6px}
+.classes{margin:0;padding:4px 9px 9px;border:1px solid var(--line);border-radius:10px}
+.classes legend{font-size:14px;font-weight:750;color:#45574b;padding:0 4px}
+#class-filters{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.class-label,.color-toggle{display:flex;gap:5px;align-items:center;font-size:14px}
+.gender-legend{font-size:12px;color:#657165}
+.roster-scroll{flex:1;min-height:90px;overflow:auto;border-top:1px solid var(--line)}
+.roster-name-actions{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.roster-student-name{overflow-wrap:anywhere}
+.roster-exclude{font-size:12px;min-height:28px;padding:3px 7px;white-space:nowrap}
+.roster-excluded .roster-student-name{text-decoration:line-through;color:#606873}
+.roster-exclude[aria-pressed=true]{background:#f5f0e8;border-color:#c9bca7;color:#674b32}
+.duplicate-badge{border-radius:4px;background:#eeeaf8;color:#53417b;padding:2px 5px;font-size:11px;white-space:nowrap}
+#singleton-dialog{width:min(580px,calc(100% - 24px));max-width:none}
+#singleton-teams{display:grid;gap:8px;margin-top:12px}
+.singleton-option{display:grid;gap:6px;border:1px solid var(--line);border-radius:9px;padding:9px}
+.singleton-option label{display:grid;gap:4px;font-size:13px;font-weight:700}
+.singleton-option select{width:100%}
+#singleton-status{color:#8b3f32}
+table{width:100%;border-collapse:collapse;font-size:15px;text-align:left}
+th{position:sticky;top:0;background:#f4f6f3;color:#5b6b60;font-size:13px;z-index:1}
+th,td{padding:9px 7px;border-bottom:1px solid #edf0ec}
+td:last-child{font-weight:700}
+.empty{padding:32px 12px;color:#6c796f;text-align:center;font-size:15px}
+.editor{display:flex;flex-direction:column;min-height:0;flex:1;gap:10px}
+.editor-heading,.editor-actions{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.sensitive{font-size:12px;color:#8a4a23;background:#fff0db;border-radius:6px;padding:4px 7px}
+.small{font-size:13px;line-height:1.45;color:#657168}
+.student-rows{flex:1;min-height:110px;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:2px}
+.student-row{border:1px solid #dfe4df;border-radius:12px;padding:9px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.student-row label{display:grid;gap:3px;font-size:12px;color:#536258}
+.student-row label.name{grid-column:span 2}
+.student-row .row-remove{padding:0;min-height:32px;align-self:end;color:#875145}
+.student-row label.trait{grid-column:span 2}
+.student-row input,.student-row select{width:100%;font-size:14px;padding-inline:5px}
+.editor-actions>span{flex:1}
+.condition-title{display:flex;align-items:center;justify-content:space-between}
+.conditions{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8faf7;display:grid;gap:7px}
+.condition-groups{display:flex;gap:6px;flex-wrap:wrap}
+.condition-groups fieldset{margin:0;border:0;padding:0;display:flex;gap:4px;flex-wrap:wrap}
+.condition-groups legend{font-size:12px;font-weight:750;color:#697367;margin-bottom:4px}
+.condition-groups button{font-size:13px;min-height:34px;padding:5px 9px}
+.condition-groups button[aria-pressed=true]{color:#343d6b;background:#e7e9f6;border-color:#929ac6}
+.generate-row{display:flex;align-items:center;gap:8px;padding-top:5px;font-size:15px;font-weight:750}
+.generate-row input{width:65px}
+.generate-row .primary{margin-left:auto}
+.result-summary{font-size:14px;color:#4c5e50;min-height:20px}
+.team-results{flex:1;overflow:auto;min-height:100px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;gap:10px}
+.results-empty{grid-column:1/-1;align-self:center;padding:35px 12px}
+.results-empty h3{font-size:21px;color:#42574a;margin:12px 0 8px}
+.team-icon{font-size:35px;letter-spacing:.1em;color:#969cb8}
+.team-box{border:1px solid #dde3de;border-radius:14px;overflow:hidden}
+.team-box header{padding:9px 12px;background:#e9eee7;display:flex;align-items:center;justify-content:space-between}
+.team-box header strong{font-size:18px;color:#354f3d}
+.team-box header span{font-size:13px;color:#546b58}
+.team-box ul{margin:0;padding:4px 8px;list-style:none}
+.team-box li{font-size:15px;display:flex;gap:8px;align-items:center;padding:7px 5px;border-bottom:1px solid #edf0ec;border-radius:6px}
+.team-box li:last-child{border:0}
+.student-tag{font-size:12px;color:#617062}
+.member-name{font-weight:750;flex:1}
+#team-results .team-box{container-type:inline-size}
+#team-results .team-box header{padding-block:6px}
+#team-results .team-members-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:5px}
+#team-results .team-members-columns li{min-width:0;gap:3px 6px;padding:5px 6px;border:0}
+#team-results .team-members-columns .student-tag{white-space:nowrap}
+@container (max-width:240px){
+  #team-results .team-members-columns li{align-content:start;align-items:baseline;line-height:1.25}
+  #team-results .team-members-columns .student-tag{font-size:11px;flex-basis:100%}
+}
+body[data-gender-colors=true] .male{background:#eaf2fd;color:#244f81}
+body[data-gender-colors=true] .female{background:#f2ebfa;color:#69458b}
+dialog{border:1px solid #d9dfda;border-radius:20px;max-width:470px;padding:25px;color:#203329;box-shadow:0 16px 70px #15201940}
+dialog h2{font-size:23px;margin-bottom:12px}
+dialog p{line-height:1.7;color:#4b5b51}
+dialog::backdrop{background:#172c24a3}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+@media(max-width:1050px){.team-page{padding:13px;gap:9px}.workspace{grid-template-columns:minmax(280px,.95fr) minmax(330px,1.1fr);gap:10px}.card{padding:12px}.privacy{font-size:12px}.condition-groups button{font-size:12px;padding:5px 7px}}
+@media(max-width:760px){.team-page{height:auto;min-height:100svh}.workspace{display:flex;flex-direction:column}.card{min-height:350px}.roster-scroll{max-height:320px}.student-rows{max-height:500px}.team-results{overflow:visible}.local-badge{font-size:12px}.page-heading{align-items:flex-start}.privacy{font-size:13px}.condition-groups button{font-size:14px}h1{font-size:26px}}
+@media(max-width:400px){.team-results{grid-template-columns:1fr}.team-page{padding:10px}.card{padding:11px}.local-badge{display:none}.student-row{gap:5px}}

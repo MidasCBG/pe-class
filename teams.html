@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>팀편성 · 체육 교실</title>
+<link rel="stylesheet" href="./teams.css?v=1.4.2">
+<link rel="stylesheet" href="./teams-fixtures.css?v=1.4.2">
+<script defer src="./teams-excel.js?v=1.4.2"></script>
+<script defer src="./teams-balance.js?v=1.4.2"></script>
+<script defer src="./teams-fixtures.js?v=1.4.2"></script>
+<script defer src="./teams-bracket.js?v=1.4.2"></script>
+<script defer src="./teams-fixtures-ui.js?v=1.4.2"></script>
+<script defer src="./teams-image.js?v=1.4.2"></script>
+<script defer src="./teams.js?v=1.4.2"></script>
+</head>
+<body>
+<main class="team-page">
+  <header class="page-heading"><div><p class="eyebrow">PE CLASS / TEAM BUILDER</p><h1>팀편성</h1></div><span class="local-badge">이 기기에만 저장</span></header>
+  <p class="privacy"><strong>학생 정보는 이 브라우저에만 저장됩니다.</strong> 명단과 학생 특성을 서버로 전송하지 않습니다. ‘명단 삭제’를 누르면 이 앱의 저장 명단과 편성 결과를 지웁니다. 같은 기기·같은 브라우저·같은 사이트 주소에서 유지되며, 브라우저 데이터 삭제나 시크릿 모드에서는 사라질 수 있습니다.</p>
+  <p id="notice" class="notice" role="status" aria-live="polite"></p>
+  <div class="workspace">
+    <section class="card roster-card" aria-labelledby="roster-title">
+      <header class="card-header"><div><p class="eyebrow">01 / ROSTER</p><h2 id="roster-title">학생 명단 <span id="roster-count">0명</span></h2></div><button class="minor danger" id="erase" type="button">명단 삭제</button></header>
+      <div class="roster-tools"><button class="primary" id="edit" type="button">명단 입력</button><div id="excel-tools"><button class="minor" id="template" type="button">엑셀 양식 ↓</button><button class="minor" id="import" type="button">엑셀 불러오기</button><input id="excel-file" type="file" accept=".xlsx" hidden></div></div>
+      <p class="small mobile-note" id="mobile-note" hidden>모바일에서는 직접 입력을 이용해 주세요. 엑셀 불러오기는 PC에서 사용할 수 있어요.</p>
+      <fieldset class="classes"><legend>편성할 반 선택</legend><div id="class-filters"></div></fieldset>
+      <div class="gender-controls">
+        <button class="gender-color-button" id="gender-colors" type="button" aria-pressed="true">성별 색상 표시 <span class="gender-color-state" aria-hidden="true">켜짐</span></button>
+        <span class="gender-legend">남 · 파랑 / 여 · 보라</span>
+      </div>
+      <div class="roster-scroll" id="roster-view"><p class="empty">명단을 입력하고 함께할 반을 선택하세요.</p></div>
+      <section id="editor" class="editor" aria-labelledby="editor-title" hidden>
+        <div class="editor-heading"><h3 id="editor-title">학생 정보 입력</h3><span class="sensitive">학생 특성 표시 중</span></div>
+        <p class="small">키·운동 능력·적극성은 선택 사항입니다. 선택하지 않으면 ‘중’으로 편성합니다. 저장하면 특성 정보는 화면에서 감춰집니다.</p>
+        <div id="student-rows" class="student-rows"></div>
+        <div class="editor-actions"><button class="minor" id="add-student" type="button">+ 학생 추가</button><span></span><button class="minor" id="cancel-edit" type="button">취소</button><button class="primary" id="save-roster" type="button">명단 저장</button></div>
+      </section>
+    </section>
+    <section class="card results-card" aria-labelledby="results-title">
+      <header class="card-header"><div><p class="eyebrow">02 / TEAMS</p><h2 id="results-title">팀편성 결과</h2></div><div class="result-header-tools"><span id="selected-count">선택 0명</span><button id="save-teams-image" class="icon-action image-button" type="button" aria-label="이미지 저장" title="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button></div></header>
+      <div class="conditions">
+        <div class="condition-title"><h3>편성 조건</h3><button id="reset-conditions" class="subtle" type="button">조건 초기화</button></div>
+        <div class="condition-groups">
+          <fieldset><legend>학급</legend><button data-condition="class" data-value="separate" type="button" aria-pressed="false">반별</button><button data-condition="class" data-value="mix" type="button" aria-pressed="false">반혼합</button></fieldset>
+          <fieldset><legend>성별</legend><button data-condition="gender" data-value="separate" type="button" aria-pressed="false">남녀 분리</button><button data-condition="gender" data-value="mix" type="button" aria-pressed="false">혼성</button></fieldset>
+          <fieldset><legend>신장</legend><button data-condition="height" data-value="separate" type="button" aria-pressed="false">신장별</button><button data-condition="height" data-value="mix" type="button" aria-pressed="false">신장혼합</button></fieldset>
+          <fieldset><legend>균형</legend><button data-condition="ability" type="button" aria-pressed="false">운동 능력 반영</button><button data-condition="initiative" type="button" aria-pressed="false">적극성 반영</button></fieldset>
+        </div>
+        <p class="small">반별·남녀 분리·신장별은 같은 그룹끼리 편성합니다. 혼합 조건은 각 팀에 고르게 섞이도록 반영합니다.</p>
+        <fieldset class="size-mode"><legend>편성 기준 · 둘 중 하나를 선택해 입력하세요.</legend>
+          <label><input type="radio" name="size-mode" value="count" checked> 팀 수</label>
+          <label><input type="radio" name="size-mode" value="size"> 팀당 인원수</label>
+        </fieldset>
+        <div class="generate-row">
+          <label for="team-count" id="team-count-label">팀 수</label><input id="team-count" type="number" min="1" max="100" step="1" value="4"><span id="team-count-unit">팀</span>
+          <label for="team-capacity" id="team-capacity-label" hidden>팀당 최대</label><input id="team-capacity" type="number" min="1" max="1000" step="1" value="3" hidden><span id="team-capacity-unit" hidden>명</span>
+          <button id="generate" class="primary" type="button">팀편성하기</button>
+        </div>
+      </div>
+      <div id="result-summary" class="result-summary" role="status">선택한 학생으로 인원수를 고르게 나눕니다.</div>
+      <div id="team-results" class="team-results"><div class="empty results-empty"><span class="team-icon" aria-hidden="true">○ ○ ○</span><h3>오늘의 팀을 기다리고 있어요</h3><p>반과 조건을 선택한 뒤 팀편성하기를 눌러 주세요.</p></div></div>
+    </section>
+  </div>
+</main>
+<main id="fixture-page" class="team-page" hidden>
+  <header class="page-heading"><div><p class="eyebrow">PE CLASS / MATCH SCHEDULER</p><h1 id="fixture-title">대진편성</h1></div><button class="icon-action" id="back-to-teams" type="button" title="팀편성으로 돌아가기" aria-label="팀편성으로 돌아가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-7 7 7 7m-7-7h18"/></svg></button></header>
+  <p class="privacy"><strong>참가 팀, 대진표와 경기 결과는 이 브라우저에 저장됩니다.</strong> 학생 정보는 서버로 전송하지 않습니다. 초기화 버튼으로 저장된 대진을 지울 수 있습니다.</p>
+  <div class="workspace fixture-workspace">
+    <section class="card fixture-roster" aria-labelledby="fixture-roster-title">
+      <header class="card-header"><div><p class="eyebrow">01 / TEAMS</p><h2 id="fixture-roster-title">참가 팀</h2></div><button id="import-teams" class="minor" type="button">팀편성 가져오기</button></header>
+      <div class="gender-controls">
+        <button class="gender-color-button" id="fixture-colors" type="button" aria-pressed="true">성별 색상 표시 <span class="gender-color-state" aria-hidden="true">켜짐</span></button>
+        <span class="gender-legend">남 · 파랑 / 여 · 보라</span>
+      </div>
+      <div id="fixture-team-list" class="fixture-team-list"></div>
+    </section>
+    <section class="card fixture-board" aria-labelledby="fixture-board-title">
+      <header class="card-header"><div><p class="eyebrow">02 / MATCHES</p><h2 id="fixture-board-title">대진표</h2></div>
+        <div class="result-header-tools"><span id="fixture-count" class="small">0팀</span>
+          <button id="expand-fixtures" class="icon-action image-button" type="button" title="크게 보기" aria-label="크게 보기" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg></button>
+          <button id="save-fixtures-image" class="icon-action image-button" type="button" title="이미지 저장" aria-label="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button>
+          <button id="reset-fixtures" class="icon-action danger" type="button" title="참가 팀과 대진표 초기화" aria-label="참가 팀과 대진표 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5m-5 0a8 8 0 1 1 .5 6"/></svg></button>
+        </div>
+      </header>
+      <div class="fixture-controls">
+        <div class="fixture-selects"><label>경기 방식 <select id="fixture-family"><option value="knockout">토너먼트</option><option value="league">리그</option></select></label>
+          <label>세부 방식 <select id="fixture-mode"></select></label></div>
+        <p id="fixture-hint" class="small"></p>
+        <div id="partial-options" class="fixture-selects" hidden>
+          <label>진행할 라운드 <input id="partial-rounds" type="number" value="2" min="1" max="99" step="1"></label>
+          <button id="same-class" class="fixture-toggle" type="button" aria-pressed="false">같은 반 팀끼리만</button>
+        </div>
+        <div id="group-options" class="fixture-selects" hidden>
+          <label id="group-count-label">조 수 <input id="fixture-group-count" type="number" value="2" min="2" max="50" step="1"></label>
+          <label>조 배정 <select id="fixture-assignment"><option value="random">무작위</option><option value="manual">수동</option></select></label>
+        </div>
+        <div id="split-options" hidden>
+          <div class="fixture-selects" role="group" aria-label="스플릿 리그 진행 기준">
+            <button id="split-by-class" class="fixture-toggle" type="button" aria-pressed="false">반별</button>
+            <button id="split-by-gender" class="fixture-toggle" type="button" aria-pressed="false">성별</button>
+            <span class="small">선택한 기준별로 1차 리그와 상·하위조 경기를 진행합니다.</span>
+          </div>
+          <p id="split-message" class="small" role="status"></p>
+        </div>
+        <div class="fixture-entry fixture-capacity">
+          <label for="parallel-games">동시 진행 경기 수</label>
+          <input id="parallel-games" type="number" min="1" max="50" step="1" placeholder="미지정" aria-describedby="parallel-games-hint">
+          <span id="parallel-games-hint" class="small">선택 사항</span>
+          <button id="make-fixtures" class="primary icon-with-text" type="button" title="대진표 만들기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v5H4zm0 11h5v5H4zm5-8h5v10H9m5-5h6"/></svg>대진표 만들기</button>
+        </div>
+      </div>
+      <p id="fixture-status" class="small" role="status"></p>
+      <div id="fixture-schedule" class="fixture-schedule"></div>
+    </section>
+  </div>
+</main>
+<dialog id="fixture-presentation" class="fixture-presentation" aria-labelledby="presentation-title">
+  <header class="page-heading"><div><h2 id="presentation-title">대진표</h2><p id="presentation-mode" class="small"></p></div><button id="close-presentation" class="icon-action" type="button" title="큰 화면 닫기" aria-label="큰 화면 닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
+  <div id="presentation-body"></div>
+</dialog>
+<dialog id="fixture-reset-dialog" aria-labelledby="fixture-reset-title">
+  <h2 id="fixture-reset-title">대진표를 초기화할까요?</h2>
+  <p>저장된 참가 팀, 대진표, 승패 기록을 지웁니다. 학생 명단은 유지됩니다.</p>
+  <div class="dialog-actions"><button id="cancel-fixture-reset" class="minor" type="button">취소</button><button id="confirm-fixture-reset" class="danger" type="button">초기화</button></div>
+</dialog>
+<dialog id="singleton-dialog" aria-labelledby="singleton-title">
+  <h2 id="singleton-title">1인 팀을 어떻게 편성할까요?</h2>
+  <p>중복 배정한 학생은 원래 팀에도 남습니다.</p>
+  <div id="singleton-teams"></div>
+  <p id="singleton-status" class="small" role="status"></p>
+  <div class="dialog-actions"><button id="cancel-singletons" class="minor" type="button">취소</button><button id="confirm-singletons" class="primary" type="button">편성 확정</button></div>
+</dialog>
+<dialog id="privacy-dialog" aria-labelledby="privacy-title"><h2 id="privacy-title">학생 특성이 표시됩니다</h2><p>편집 화면에는 키·운동 능력·적극성 정보가 나타납니다. 학생들에게 화면이 보이지 않는지 확인해 주세요.</p><div class="dialog-actions"><button class="minor" id="privacy-cancel" type="button">취소</button><button class="primary" id="privacy-confirm" type="button">확인 후 편집</button></div></dialog>
+<dialog id="delete-dialog" aria-labelledby="delete-title"><h2 id="delete-title">저장한 명단을 삭제할까요?</h2><p>이 브라우저에 저장된 명단과 특성, 현재 팀과 대진표를 삭제합니다. 이전에 따로 저장한 이미지 파일은 해당 저장 위치에서 삭제해 주세요.</p><div class="dialog-actions"><button class="minor" id="delete-cancel" type="button">취소</button><button class="primary" id="delete-confirm" type="button">명단 삭제</button></div></dialog>
+<dialog id="image-dialog" aria-labelledby="image-title">
+  <h2 id="image-title">이미지 저장</h2>
+  <p id="image-privacy"></p>
+  <div class="image-options">
+    <label>파일 형식 <select id="image-format"><option value="png">PNG</option><option value="jpg">JPG</option></select></label>
+    <label>저장 방식 <select id="image-layout"><option value="single">한 장에 모두 담기</option><option value="pages">크게 나눠 저장</option></select></label>
+    <label id="image-page-label" hidden>저장할 페이지 <select id="image-page"></select></label>
+  </div>
+  <p class="small" id="image-size"></p>
+  <p class="small" role="status" id="image-status"></p>
+  <div class="dialog-actions"><button id="image-close" class="minor" type="button">닫기</button><button id="image-save" class="primary" type="button">저장 위치 선택</button></div>
+</dialog>
+</body>
+</html>
