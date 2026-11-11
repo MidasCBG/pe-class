@@ -11,7 +11,7 @@ function openTeams() {
     return;
   }
   const frame = document.createElement("iframe");
-  frame.src = "./teams.html?v=1.4.2";
+  frame.src = "./teams.html?v=1.4.3";
   frame.title = "팀편성 및 대진편성";
   frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-downloads");
   host.append(frame);

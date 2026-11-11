@@ -1,6 +1,14 @@
 .sports-layout{display:grid;grid-template-columns:clamp(154px,15vw,212px) minmax(0,1fr);grid-template-rows:1fr auto;min-height:100svh}
 .sport-rail{grid-area:1/1;padding:18px 14px;background:#edf1ed;border-right:1px solid #dce5de}
-.pe-brand{display:grid;gap:2px;margin:0 7px 26px}
+.pe-brand{display:flex;align-items:center;gap:8px;margin:0 0 26px}
+.pe-brand-icon{
+  display:block;flex:none;width:32px;height:32px;border-radius:8px;
+  /* Blend the light parts of the icon into the rail background. */
+  filter:grayscale(1) contrast(2);
+  mix-blend-mode:multiply;
+  opacity:.88;
+}
+.pe-brand-label{display:grid;gap:2px;white-space:nowrap}
 .pe-brand strong{font-size:clamp(22px,2.2vw,30px);line-height:1.1;letter-spacing:-.07em}
 .pe-brand span{color:#51645b;font-weight:780;font-size:12px;letter-spacing:.14em}
 .sport-list{display:grid;gap:10px}
