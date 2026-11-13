@@ -9,7 +9,7 @@
 <meta property="og:locale" content="ko_KR">
 <meta property="og:site_name" content="체육 교실">
 <meta property="og:title" content="체육 교실">
-<meta property="og:description" content="배드민턴과 플라잉디스크 규칙부터 팀편성과 대진편성까지">
+<meta property="og:description" content="배드민턴, 플라잉디스크, 피구 규칙부터 팀편성과 대진편성까지">
 <meta property="og:url" content="https://midascbg.github.io/pe-class/">
 <meta property="og:image" content="https://midascbg.github.io/pe-class/pe-whistle-share-v1.4.3.png">
 <meta property="og:image:type" content="image/png">
@@ -18,13 +18,15 @@
 <meta property="og:image:alt" content="체육 교실 제목 옆의 호루라기 아이콘">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://midascbg.github.io/pe-class/pe-whistle-share-v1.4.3.png">
-<link rel="stylesheet" href="./style.css?v=1.4.3">
-<link rel="stylesheet" href="./sports.css?v=1.4.3">
-<link rel="stylesheet" href="./teams-shell.css?v=1.4.3">
-<script defer src="./sports.js?v=1.4.3"></script>
-<script defer src="./app.js?v=1.4.3"></script>
-<script defer src="./ultimate.js?v=1.4.3"></script>
-<script defer src="./teams-shell.js?v=1.4.3"></script>
+<link rel="stylesheet" href="./style.css?v=1.5.4">
+<link rel="stylesheet" href="./sports.css?v=1.5.4">
+<link rel="stylesheet" href="./dodgeball.css?v=2026-score-terms">
+<link rel="stylesheet" href="./teams-shell.css?v=1.5.4">
+<script defer src="./sports.js?v=2026-referee-whistle"></script>
+<script defer src="./app.js?v=2026-sound"></script>
+<script defer src="./ultimate.js?v=2026-sound"></script>
+<script defer src="./dodgeball.js?v=2026-score-tie"></script>
+<script defer src="./teams-shell.js?v=1.5.4"></script>
 </head>
 <body>
 <div class="sports-layout">
@@ -46,6 +48,15 @@
     <a class="sport-pick disc" id="pick-ultimate" href="#ultimate/field">
       <svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="22" cy="17" rx="14" ry="6" transform="rotate(-20 22 17)"/><path d="M10 22c3 6 22 1 26-6M4 26h7m-7 5h13"/></svg>
       <span>플라잉디스크<br>얼티밋</span>
+    </a>
+    <a class="sport-pick dodgeball-pick" id="pick-dodgeball" href="#dodgeball/court">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <g id="dodgeball-icon">
+          <circle cx="20" cy="20" r="15" fill="#fbd54e" stroke="#29251b" stroke-width="2"/>
+          <path d="M8 12a15 15 0 0 1 13-7c-3 4-5 7-5 11l-9 4a15 15 0 0 1 1-8Zm26 3a15 15 0 0 1-4 16l-9-3 2-8 11-5ZM12 32a15 15 0 0 0 13 2l-4-6-9 4Z" fill="#29251b" stroke="none"/>
+        </g>
+      </svg>
+      <span>피구</span>
     </a>
   </nav>
   <nav class="team-navigation" aria-label="팀 및 대진 관리">
@@ -92,6 +103,7 @@
     <a class="brand" href="#ultimate/field"><span class="symbol" aria-hidden="true">
       <svg viewBox="0 0 40 40"><ellipse cx="21" cy="19" rx="14" ry="6" transform="rotate(-20 21 19)"/><path d="M9 24c3 6 22 1 26-6m-31 12h11"/></svg>
     </span>플라잉디스크 얼티밋</a>
+    <button id="ultimate-sound" class="sound" type="button" aria-pressed="false"></button>
   </header>
   <nav class="chapters" id="ultimate-nav" aria-label="얼티밋 학습 주제"></nav>
   <main class="lesson" id="ultimate-lesson">
@@ -114,8 +126,43 @@
     <a href="https://rules.wfdf.sport/" target="_blank" rel="noopener">WFDF 공식 규칙 ↗</a>
   </footer>
 </div>
+<div class="shell sport-panel dodgeball-panel" id="dodgeball-panel" hidden>
+  <audio id="dodgeball-whistle" src="./referee-whistle.mp3" preload="auto" hidden></audio>
+  <header class="masthead">
+    <a class="brand" href="#dodgeball/court"><span class="symbol" aria-hidden="true">
+      <svg viewBox="0 0 40 40"><use href="#dodgeball-icon"/></svg>
+    </span>피구</a>
+    <div class="dodgeball-header-controls">
+      <span class="dodgeball-division">초등부 스포츠피구</span>
+      <button id="dodgeball-sound" class="sound" type="button" aria-pressed="false"></button>
+    </div>
+  </header>
+  <nav class="chapters" id="dodgeball-nav" aria-label="피구 학습 주제"></nav>
+  <main class="lesson" id="dodgeball-lesson">
+    <section class="lesson-copy" aria-labelledby="dodgeball-heading">
+      <div class="lesson-heading"><div><h1 id="dodgeball-heading"></h1><p class="lead" id="dodgeball-lead"></p></div></div>
+      <div class="lesson-toolbar">
+        <div class="controls">
+          <fieldset class="option-group"><legend>상황 선택</legend><div class="options" id="dodgeball-cases"></div></fieldset>
+        </div>
+        <div class="action-row"><button type="button" class="primary" id="dodgeball-play" hidden><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M5 3l12 7-12 7z"/></svg> 보기</button></div>
+      </div>
+      <div class="insight" id="dodgeball-insight" role="status"></div>
+    </section>
+    <section class="demo" aria-label="피구 코트와 상황 시범">
+      <header class="demo-header"><span class="demo-index" id="dodgeball-topic"></span><span class="mode-note" id="dodgeball-step"></span></header>
+      <div class="visual dodgeball-visual" id="dodgeball-visual"></div>
+      <div class="demo-footer" id="dodgeball-caption"></div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a href="https://www.schoolsportsclub.or.kr/bbs/intgrbbs/notice/noticeDetail?bbsId=BBSMSTR_000000000001&amp;nttId=118&amp;pageIndex=1" target="_blank" rel="noopener">전국학교스포츠클럽 축전 피구 요강·도면 ↗</a>
+    <a href="https://casports.or.kr/dodgeball/?board_name=dodgeball&amp;board_page=1&amp;board_pid=1&amp;list_type=list&amp;mode=view&amp;order_by=fn_pid&amp;order_type=desc&amp;search_field=fn_title" target="_blank" rel="noopener">피구 경기 규정 ↗</a>
+    <a href="https://musicedu.jnu.ac.kr/bbs/education/2584/818904/download.do" target="_blank" rel="noopener">재개 동작 참고 ↗</a>
+  </footer>
+</div>
 <section class="sport-panel team-host" id="teams-panel" aria-label="팀 및 대진 관리" hidden></section>
-<footer class="sport-credit"><span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="site-version">v1.4.3</span></span></footer>
+<footer class="sport-credit"><span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="site-version">v1.5.4</span></span></footer>
 </div>
 </body>
 </html>

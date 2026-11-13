@@ -62,6 +62,7 @@
   };
 
   const get = id => document.getElementById("ultimate-" + id);
+  const sound = setupLessonSound(get("sound"));
   const tabs = Object.keys(lessons);
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let active = "field";
@@ -171,8 +172,13 @@
   function demonstrate() {
     cancelAnimationFrame(frame);
     const item = current();
+    const cue = item.name === "득점존 안 캐치" ? "point"
+      : item.name === "드롭" || item.name === "풀과 첫 패스" ? "impact"
+      : item.alert || item.name === "트래블" || item.name === "스톨 아웃" || item.name.includes("필드 밖") ? "notice"
+      : item.path && item.name !== "득점 뒤 전환" ? "catch" : null;
     const complete = () => {
       move(1);
+      sound.play(cue);
       get("result").textContent = item.result;
       updateNote(true);
     };
@@ -184,8 +190,14 @@
     updateNote();
     const start = performance.now();
     const duration = item.count ? item.count * 1000 : 2100;
+    const release = item.count ? (item.count - 1) / item.count : 0;
+    let released = false;
     function tick(now) {
       const progress = Math.min(1, (now - start)/duration);
+      if (!released && item.path && item.name !== "트래블" && progress >= release) {
+        released = true;
+        sound.play("throw");
+      }
       if (progress === 1) complete();
       else {
         move(progress);
@@ -218,7 +230,7 @@
       demonstrate();
     } else if (event.target.closest("#ultimate-watch")) {
       const item = current();
-      visual.innerHTML = `<iframe class="skill-film" title="${item.name} 공개 시범" src="https://www.youtube-nocookie.com/embed/${item.youtube}?autoplay=1&rel=0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      visual.innerHTML = `<iframe class="skill-film" title="${item.name} 공개 시범" src="https://www.youtube-nocookie.com/embed/${item.youtube}?autoplay=1&mute=${sound.enabled ? 0 : 1}&rel=0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
       visual.querySelector("iframe").focus({preventScroll:true});
     }
   });

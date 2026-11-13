@@ -1,0 +1,59 @@
+.sport-pick.dodgeball-pick{background:#fff2b8;color:#584208}
+.sport-pick.dodgeball-pick[aria-current=true]{background:#f4cf50;color:#31260b}
+.dodgeball-panel{--forest:#71500a}
+.dodgeball-panel .chapters{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.dodgeball-panel .chapters a[aria-current]{color:#6e4c07}
+.dodgeball-panel .chapters a[aria-current]::after{background:#b58012}
+.dodgeball-panel .chapters a:hover{background:#fff3cc}
+.dodgeball-panel .symbol{background:#f9df77}
+.dodgeball-division{color:#655831;font-size:14px;font-weight:700}
+.dodgeball-header-controls{display:flex;align-items:center;gap:clamp(6px,1.3vw,16px)}
+.dodgeball-panel .option-group:has(button[aria-pressed=true]){background:#fffaf0;border-color:#dfc985}
+.dodgeball-panel .options button[aria-pressed=true]{background:#fff0b6;border-color:#cfa74a;color:#60430a}
+.dodgeball-panel .primary{background:#f6d055;color:#302408}
+.dodgeball-panel .primary:hover{background:#ffe37d}
+.dodgeball-panel .primary[hidden]{display:none}
+.dodgeball-panel .insight{background:#fff5d6;border-color:#d7ac39;color:#493916}
+.dodgeball-panel .insight strong{color:#664706}
+.dodgeball-panel .demo{background:#2e291f}
+.dodgeball-panel .demo-index,.dodgeball-panel .mode-note{color:#fff0b8}
+.dodgeball-panel .demo-index{letter-spacing:.03em}
+.dodgeball-panel .demo-footer{color:#f5e8ca}
+.dodgeball-panel .team-key::before{background:#7ab8ed}
+.dodgeball-panel .team-key.red::before{background:#f28a7a}
+.dodgeball-panel .team-key.ball::before{background:#fbd54e}
+.dodgeball-visual > svg{width:min(100%,1050px);max-height:100%}
+.dodgeball-panel .score-team{background:#433a27}
+.dodgeball-panel .score-team strong{color:#fff3bd}
+.dodgeball-panel .scoreboard p,.dodgeball-panel .scoreboard small{color:#f6ecd6}
+.dodgeball-card{width:min(100%,850px);padding:clamp(12px,2vw,26px)}
+.dodgeball-card ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0;padding:0;list-style:none}
+.dodgeball-card li{display:grid;gap:4px;align-content:start;padding:clamp(10px,2vw,20px);border:1px solid #ffffff32;border-radius:13px;background:#433a27;font-size:clamp(15px,1.6vw,20px)}
+.dodgeball-card strong{font-size:clamp(17px,2vw,25px);color:#ffe798}
+.dodgeball-terms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px;margin:14px 0 0;padding-top:12px;border-top:1px solid #ffffff32;color:#f5e8ca;font-size:clamp(15px,1.45vw,19px);line-height:1.4;word-break:keep-all}
+.dodgeball-terms dt{font-weight:750;color:#ffe798}
+.dodgeball-terms dd{margin:3px 0 0}
+.dodgeball-card [aria-current=step]{border-color:#ffdc59;background:#5b481e}
+.dodgeball-card .dodgeball-restart-pose{display:block;width:min(34%,140px);height:auto;margin:0 auto 10px}
+.dodgeball-panel .footer{flex-wrap:wrap;padding-block:6px}
+@media(min-width:760px){
+  .dodgeball-panel [data-topic=fouls] .lesson-toolbar{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px
+  }
+  .dodgeball-panel [data-topic=fouls] .option-group{width:100%;padding-inline:6px}
+  .dodgeball-panel [data-topic=fouls] .options{flex-wrap:nowrap;gap:4px}
+  .dodgeball-panel [data-topic=fouls] .options button{
+    flex:1 1 auto;min-width:0;padding-inline:5px;word-break:keep-all;overflow-wrap:anywhere
+  }
+  .dodgeball-panel [data-topic=fouls] .primary{padding-inline:11px}
+}
+@media(min-width:1000px) and (min-height:620px){
+  .dodgeball-visual > svg{width:min(100%,1050px,206cqh)}
+  .dodgeball-visual:has(.dodgeball-terms){align-items:safe center;overflow:auto}
+}
+@media(max-width:560px){
+  .dodgeball-panel .chapters{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dodgeball-panel .chapters a{min-height:40px}
+  .dodgeball-card ol{grid-template-columns:1fr}
+  .dodgeball-terms{grid-template-columns:1fr}
+}

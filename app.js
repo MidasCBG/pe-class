@@ -66,9 +66,6 @@ function isDouble(){return state.match === "double";}
 function matchName(){return isDouble() ? "복식" : "단식";}
 function technique(){return families[state.family][1][state.skill];}
 function cases(){return state.page === "faults" && !isDouble() ? currentPage().cases.slice(0,-1) : currentPage().cases;}
-function icon(sound){
-  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/>'+ (sound ? '<path d="M16 9a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10"/>' : '<path d="m16 10 5 5m0-5-5 5"/>') + '</svg>';
-}
 function button(label,key,value,active,cls=""){
   return '<button type="button" data-key="'+key+'" data-value="'+value+'"'+ (active === undefined ? "" : ' aria-pressed="'+active+'"') + (cls ? ' class="'+cls+'"' : "") +'>'+label+'</button>';
 }
@@ -80,7 +77,7 @@ function segments(items,key){
 }
 function go(){
   const [route, techniqueId] = location.hash.slice(1).split("/");
-  if(route === "ultimate" || route === "teams" || route === "fixtures"){
+  if(route === "ultimate" || route === "dodgeball" || route === "teams" || route === "fixtures"){
     reset();
     renderVisual();
     return;
@@ -227,8 +224,7 @@ function render(){
   const index=Object.keys(pages).indexOf(state.page)+1;
   $("nav").innerHTML=Object.entries(pages).map(([key,value],i)=>`<a href="#${key}"${key===state.page?' aria-current="page"':""}><span>0${i+1}</span>${value.label}</a>`).join("");
   $("match").innerHTML=segments([["single","단식"],["double","복식"]],"match");
-  $("sound").innerHTML=icon(state.sound)+(state.sound?"소리 켜짐":"소리 꺼짐");
-  $("sound").setAttribute("aria-pressed",state.sound);
+  renderSoundButton($("sound"),state.sound);
   $("demo-index").textContent="0"+index+" / "+page.visual;
   $("demo-note").textContent=state.page==="score"?state.yearMode+"점제":state.page==="skills"?"오른손잡이 기준":matchName();
   $("lesson").dataset.page=state.page;
@@ -295,8 +291,7 @@ document.addEventListener("click",event=>{
       audio??=new AudioContext();
       audio.resume().catch(()=>{});
     }
-    $("sound").innerHTML=icon(state.sound)+(state.sound?"소리 켜짐":"소리 꺼짐");
-    $("sound").setAttribute("aria-pressed",state.sound);
+    renderSoundButton($("sound"),state.sound);
     if($("skill-film"))$("skill-film").muted=!state.sound;
     return;
   }
