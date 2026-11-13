@@ -77,7 +77,7 @@ function segments(items,key){
 }
 function go(){
   const [route, techniqueId] = location.hash.slice(1).split("/");
-  if(route === "ultimate" || route === "dodgeball" || route === "teams" || route === "fixtures"){
+  if(!route || route === "home" || route === "ultimate" || route === "dodgeball" || route === "teams" || route === "fixtures"){
     reset();
     renderVisual();
     return;

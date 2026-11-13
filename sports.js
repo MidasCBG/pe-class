@@ -80,6 +80,7 @@ function renderNotes(container, notes, selected) {
 }
 
 const sportNavigation = [
+  { pick: document.querySelector("#pick-home"), panel: document.querySelector("#home-panel") },
   { pick: document.querySelector("#pick-badminton"), panel: document.querySelector("#badminton-panel") },
   { pick: document.querySelector("#pick-ultimate"), panel: document.querySelector("#ultimate-panel") },
   { pick: document.querySelector("#pick-dodgeball"), panel: document.querySelector("#dodgeball-panel") },
@@ -90,13 +91,14 @@ const sportNavigation = [
 function selectSport() {
   const fragment = location.hash.slice(1);
   const section = fragment.split("/")[0];
-  const selected = section === "teams" || section === "fixtures" ? 3 : section === "dodgeball" ? 2 : section === "ultimate" ? 1 : 0;
+  const selected = !section || section === "home" ? 0 :
+    section === "teams" || section === "fixtures" ? 4 : section === "dodgeball" ? 3 : section === "ultimate" ? 2 : 1;
   sportNavigation.forEach(({ pick, panel, alternatePick }, index) => {
     panel.hidden = selected !== index;
     const activePick = section === "fixtures" && alternatePick ? alternatePick : pick;
     for (const link of [pick, alternatePick]) {
       if (!link) continue;
-      if (selected === index && link === activePick) link.setAttribute("aria-current", "true");
+      if (selected === index && link === activePick) link.setAttribute("aria-current", index === 0 ? "page" : "true");
       else link.removeAttribute("aria-current");
     }
   });

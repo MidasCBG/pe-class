@@ -1,0 +1,35 @@
+.landing.sport-panel {
+  display: grid;
+  align-items: center;
+  padding: clamp(24px, 6vw, 96px);
+  color: #fff;
+  background: linear-gradient(90deg, #0d1d17ee 0%, #0d1d179c 43%, #0d1d170c 100%),
+    #263c30 url("./landing-gym.png") center / cover no-repeat;
+}
+
+.landing.sport-panel[hidden] {
+  display: none;
+}
+
+.landing-hero-copy {
+  max-width: 56rem;
+}
+
+.landing h1 {
+  margin: 0 0 .38em;
+  font-size: clamp(36px, 5.5vw, 84px);
+  line-height: 1.12;
+  letter-spacing: -.075em;
+}
+
+.landing h1 em {
+  color: #d7f18d;
+  font-style: normal;
+}
+
+.landing p {
+  max-width: 32rem;
+  margin: 0;
+  font-size: clamp(17px, 1.6vw, 23px);
+  color: #f2f5ed;
+}

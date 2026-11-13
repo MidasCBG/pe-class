@@ -25,7 +25,7 @@
 .caption-guide{font-size:clamp(13px,1.2vw,15px);line-height:1.35}
 .caption-guide strong{color:#fff;margin-right:.35em}
 .caption-guide small{font-size:inherit}
-.sport-credit{grid-area:2/1;padding:12px 9px;color:#3e5147;background:#edf1ed;border-right:1px solid #dce5de}
+.sport-credit{padding:12px 0 0;color:#3e5147}
 .sport-credit .credit{gap:5px;flex-wrap:wrap;font-size:14px}
 .sport-credit .version{font-size:12px}
 .ultimate-panel{--forest:#753815}
@@ -54,8 +54,11 @@
 @media(min-width:1000px) and (min-height:620px){
   .ultimate-visual > svg{width:min(100%,1050px,216cqh)}
 }
+@media(min-width:821px){
+  .sport-rail{position:sticky;top:0;align-self:start;height:100svh;overflow-y:auto}
+}
 @media(max-width:820px){
-  .sports-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto}
+  .sports-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
   .sport-rail{grid-area:1/1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 14px;border-right:0;border-bottom:1px solid #dce5de}
   .pe-brand{margin:0 6px 0 0}
   .sport-list{display:flex;flex-wrap:wrap;gap:8px}
@@ -63,7 +66,7 @@
   .sport-pick br{display:none}
   .sport-pick.disc span{display:flex;gap:.3em}
   .sport-panel{grid-area:2/1;min-height:0}
-  .sport-credit{grid-area:3/1;border:0;border-top:1px solid #dce5de;padding-inline:14px}
+  .sport-credit{order:4;margin-left:auto;padding:0}
 }
 @media(max-width:560px){
   .ultimate-panel .chapters{grid-template-columns:repeat(4,minmax(0,1fr))}

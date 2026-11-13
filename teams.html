@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>팀편성 · 체육 교실</title>
-<link rel="stylesheet" href="./teams.css?v=1.5.4">
-<link rel="stylesheet" href="./teams-fixtures.css?v=1.5.4">
-<script defer src="./teams-excel.js?v=1.5.4"></script>
-<script defer src="./teams-balance.js?v=1.5.4"></script>
-<script defer src="./teams-fixtures.js?v=1.5.4"></script>
-<script defer src="./teams-bracket.js?v=1.5.4"></script>
-<script defer src="./teams-fixtures-ui.js?v=1.5.4"></script>
-<script defer src="./teams-image.js?v=1.5.4"></script>
-<script defer src="./teams.js?v=1.5.4"></script>
+<link rel="stylesheet" href="./teams.css?v=2026-team-form-layout">
+<link rel="stylesheet" href="./teams-fixtures.css?v=2026-team-size-controls">
+<script defer src="./teams-excel.js?v=1.7.6"></script>
+<script defer src="./teams-balance.js?v=2026-team-size-balance"></script>
+<script defer src="./teams-fixtures.js?v=1.7.6"></script>
+<script defer src="./teams-bracket.js?v=2026-individual-fixtures"></script>
+<script defer src="./teams-fixtures-ui.js?v=2026-fixture-reset"></script>
+<script defer src="./teams-image.js?v=2026-individual-fixtures"></script>
+<script defer src="./teams.js?v=2026-short-team-roster"></script>
 </head>
 <body>
 <main class="team-page">
@@ -45,17 +45,23 @@
         <div class="condition-groups">
           <fieldset><legend>학급</legend><button data-condition="class" data-value="separate" type="button" aria-pressed="false">반별</button><button data-condition="class" data-value="mix" type="button" aria-pressed="false">반혼합</button></fieldset>
           <fieldset><legend>성별</legend><button data-condition="gender" data-value="separate" type="button" aria-pressed="false">남녀 분리</button><button data-condition="gender" data-value="mix" type="button" aria-pressed="false">혼성</button></fieldset>
-          <fieldset><legend>신장</legend><button data-condition="height" data-value="separate" type="button" aria-pressed="false">신장별</button><button data-condition="height" data-value="mix" type="button" aria-pressed="false">신장혼합</button></fieldset>
+          <fieldset><legend>신장</legend><button data-condition="height" data-value="separate" type="button" aria-pressed="false">신장별</button><button data-condition="height" data-value="mix" type="button" aria-label="신장 혼합" aria-pressed="false">신장<br>혼합</button></fieldset>
           <fieldset><legend>균형</legend><button data-condition="ability" type="button" aria-pressed="false">운동 능력 반영</button><button data-condition="initiative" type="button" aria-pressed="false">적극성 반영</button></fieldset>
         </div>
-        <p class="small">반별·남녀 분리·신장별은 같은 그룹끼리 편성합니다. 혼합 조건은 각 팀에 고르게 섞이도록 반영합니다.</p>
-        <fieldset class="size-mode"><legend>편성 기준 · 둘 중 하나를 선택해 입력하세요.</legend>
-          <label><input type="radio" name="size-mode" value="count" checked> 팀 수</label>
-          <label><input type="radio" name="size-mode" value="size"> 팀당 인원수</label>
-        </fieldset>
+        <p class="small condition-help">분리 조건은 같은 그룹끼리, 혼합 조건은 각 팀에 고르게 배정해요.</p>
+        <h3 id="size-mode-title">편성 기준</h3>
+        <div class="size-mode">
+          <div class="size-options" role="radiogroup" aria-labelledby="size-mode-title">
+            <label><input type="radio" name="size-mode" value="count" checked><span>팀 수</span></label>
+            <label><input type="radio" name="size-mode" value="size"><span>팀당 인원수</span></label>
+            <label><input type="radio" name="size-mode" value="individual"><span>개인전</span></label>
+          </div>
+          <div class="size-inputs">
+            <label for="team-count" id="team-count-label">팀 수</label><input id="team-count" type="number" min="1" max="100" step="1" value="4"><span id="team-count-unit">팀</span>
+            <label for="team-capacity" id="team-capacity-label" hidden>팀당 최대</label><input id="team-capacity" type="number" min="1" max="1000" step="1" value="3" hidden><span id="team-capacity-unit" hidden>명</span>
+          </div>
+        </div>
         <div class="generate-row">
-          <label for="team-count" id="team-count-label">팀 수</label><input id="team-count" type="number" min="1" max="100" step="1" value="4"><span id="team-count-unit">팀</span>
-          <label for="team-capacity" id="team-capacity-label" hidden>팀당 최대</label><input id="team-capacity" type="number" min="1" max="1000" step="1" value="3" hidden><span id="team-capacity-unit" hidden>명</span>
           <button id="generate" class="primary" type="button">팀편성하기</button>
         </div>
       </div>
@@ -66,10 +72,16 @@
 </main>
 <main id="fixture-page" class="team-page" hidden>
   <header class="page-heading"><div><p class="eyebrow">PE CLASS / MATCH SCHEDULER</p><h1 id="fixture-title">대진편성</h1></div><button class="icon-action" id="back-to-teams" type="button" title="팀편성으로 돌아가기" aria-label="팀편성으로 돌아가기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5-7 7 7 7m-7-7h18"/></svg></button></header>
-  <p class="privacy"><strong>참가 팀, 대진표와 경기 결과는 이 브라우저에 저장됩니다.</strong> 학생 정보는 서버로 전송하지 않습니다. 초기화 버튼으로 저장된 대진을 지울 수 있습니다.</p>
+  <p class="privacy"><strong>참가 팀, 대진표와 경기 결과는 이 브라우저에 저장됩니다.</strong> 학생 정보는 서버로 전송하지 않습니다.</p>
   <div class="workspace fixture-workspace">
     <section class="card fixture-roster" aria-labelledby="fixture-roster-title">
-      <header class="card-header"><div><p class="eyebrow">01 / TEAMS</p><h2 id="fixture-roster-title">참가 팀</h2></div><button id="import-teams" class="minor" type="button">팀편성 가져오기</button></header>
+      <header class="card-header">
+        <div><p class="eyebrow">01 / TEAMS</p><h2 id="fixture-roster-title">참가 팀</h2></div>
+        <div class="result-header-tools">
+          <button id="import-teams" class="minor" type="button">팀편성 가져오기</button>
+          <button id="reset-fixture-teams" class="icon-action danger" type="button" title="참가 팀 초기화" aria-label="참가 팀 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5m-5 0a8 8 0 1 1 .5 6"/></svg></button>
+        </div>
+      </header>
       <div class="gender-controls">
         <button class="gender-color-button" id="fixture-colors" type="button" aria-pressed="true">성별 색상 표시 <span class="gender-color-state" aria-hidden="true">켜짐</span></button>
         <span class="gender-legend">남 · 파랑 / 여 · 보라</span>
@@ -81,7 +93,7 @@
         <div class="result-header-tools"><span id="fixture-count" class="small">0팀</span>
           <button id="expand-fixtures" class="icon-action image-button" type="button" title="크게 보기" aria-label="크게 보기" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg></button>
           <button id="save-fixtures-image" class="icon-action image-button" type="button" title="이미지 저장" aria-label="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button>
-          <button id="reset-fixtures" class="icon-action danger" type="button" title="참가 팀과 대진표 초기화" aria-label="참가 팀과 대진표 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5m-5 0a8 8 0 1 1 .5 6"/></svg></button>
+          <button id="reset-fixtures" class="icon-action danger" type="button" title="대진표 초기화" aria-label="대진표 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5m-5 0a8 8 0 1 1 .5 6"/></svg></button>
         </div>
       </header>
       <div class="fixture-controls">
@@ -122,12 +134,17 @@
 </dialog>
 <dialog id="fixture-reset-dialog" aria-labelledby="fixture-reset-title">
   <h2 id="fixture-reset-title">대진표를 초기화할까요?</h2>
-  <p>저장된 참가 팀, 대진표, 승패 기록을 지웁니다. 학생 명단은 유지됩니다.</p>
+  <p>저장된 대진표와 승패 기록을 지웁니다. 가져온 참가 팀은 남아 있어 새 대진표를 바로 만들 수 있습니다.</p>
   <div class="dialog-actions"><button id="cancel-fixture-reset" class="minor" type="button">취소</button><button id="confirm-fixture-reset" class="danger" type="button">초기화</button></div>
 </dialog>
+<dialog id="fixture-teams-reset-dialog" aria-labelledby="fixture-teams-reset-title">
+  <h2 id="fixture-teams-reset-title">대진편성의 참가 팀을 초기화할까요?</h2>
+  <p>가져온 참가 팀과 이 팀으로 만든 대진표·승패 기록을 지웁니다. 팀편성 화면의 결과는 남아 있어 다시 가져올 수 있습니다.</p>
+  <div class="dialog-actions"><button id="cancel-fixture-teams-reset" class="minor" type="button">취소</button><button id="confirm-fixture-teams-reset" class="danger" type="button">초기화</button></div>
+</dialog>
 <dialog id="singleton-dialog" aria-labelledby="singleton-title">
-  <h2 id="singleton-title">1인 팀을 어떻게 편성할까요?</h2>
-  <p>중복 배정한 학생은 원래 팀에도 남습니다.</p>
+  <h2 id="singleton-title">인원이 적은 팀을 어떻게 편성할까요?</h2>
+  <p>가장 인원이 많은 팀을 기준으로 부족한 인원을 표시했어요. 중복 배정한 학생은 원래 팀에도 남습니다.</p>
   <div id="singleton-teams"></div>
   <p id="singleton-status" class="small" role="status"></p>
   <div class="dialog-actions"><button id="cancel-singletons" class="minor" type="button">취소</button><button id="confirm-singletons" class="primary" type="button">편성 확정</button></div>

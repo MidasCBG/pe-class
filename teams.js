@@ -5,6 +5,7 @@
   const fields = ["class","number","gender","name","height","ability","initiative"];
   const conditions = {class:null,gender:null,height:null,ability:false,initiative:false};
   let roster = [], selectedClasses = new Set(), result = [], revision = 0;
+  let individualResult = false;
   let singletonPlan = null;
   let pendingAction = null, storageProblem = false;
   const mobile = navigator.userAgentData?.mobile ||
@@ -223,12 +224,15 @@
         "브라우저 저장 공간을 사용할 수 없습니다. 명단은 저장되지 않았습니다." : error.message);
     }
   }
-  function teamCards(teams, groupPicker) {
+  function teamCards(teams, groupPicker, individual = false) {
     return teams.map((members,index) => {
       const box = element("section","team-box"), header = document.createElement("header");
       const title = element("div","team-card-title");
-      title.append(element("span","team-number",String(index+1)),element("strong","",(index+1)+"팀"));
-      header.append(title,element("span","",members.length+"명"));
+      if (!individual) {
+        title.append(element("span","team-number",String(index+1)),element("strong","",(index+1)+"팀"));
+        header.append(title,element("span","",members.length+"명"));
+        box.append(header);
+      }
       const list = element("ul",members.length >= 3 ? "team-members team-members-columns" : "team-members");
       for (const student of members) {
         const row = element("li",student.gender === "남" ? "male" : "female");
@@ -237,19 +241,24 @@
         if (student.duplicate) row.append(element("span","duplicate-badge","중복"));
         list.append(row);
       }
-      box.append(header);
       const picker = groupPicker?.(index);
       if (picker) box.append(picker);
       box.append(list); return box;
     });
   }
   function renderResults() {
-    get("team-results").replaceChildren(...teamCards(result));
+    get("team-results").replaceChildren(...teamCards(result, undefined, individualResult));
   }
-  function finishTeams(teams, studentCount) {
+  function finishTeams(teams, studentCount, individual = false) {
     result = teams;
+    individualResult = individual;
     images.clear();
     get("save-teams-image").disabled = false;
+    if (individual) {
+      get("result-summary").textContent = "개인전 참가자 "+studentCount+"명";
+      renderResults(); message();
+      return;
+    }
     const sizes = result.map(team => team.length);
     const duplicates = result.flat().filter(student => student.duplicate).length;
     const unmixed = conditions.gender === "mix" && result.some(team => new Set(team.map(s => s.gender)).size < 2);
@@ -260,35 +269,51 @@
     renderResults(); message();
   }
   const singletonDialog = get("singleton-dialog");
-  function askAboutSingletons(teams, indexes, studentCount) {
+  function askAboutSmallerTeams(teams, indexes, studentCount, largestSize) {
     const choices = indexes.map(index => {
-      const [student] = teams[index];
-      const candidates = TeamBalance.singletonCandidates(teams,index,conditions);
+      const members = teams[index];
+      const candidates = TeamBalance.duplicateCandidates(teams,index,conditions);
+      const needed = largestSize - members.length;
+      const additions = Math.min(needed,candidates.length);
       const panel = element("section","singleton-option");
-      panel.append(element("strong","",(index+1)+"팀 · "+student.name));
+      panel.append(element("strong","",(index+1)+"팀 · "+members.length+"명 · "+needed+"명 부족"));
+      const rosterLabel = element("div","singleton-roster");
+      rosterLabel.append(element("span","","현재 구성원"));
+      const memberList = element("ul");
+      for (const student of members) {
+        memberList.append(element("li","",student.class+"반 "+student.number+"번 "+student.name));
+      }
+      rosterLabel.append(memberList);
+      panel.append(rosterLabel);
       const label = element("label","","편성 방법");
       const mode = element("select");
-      mode.add(new Option("1인 팀 그대로 두기","keep"));
+      mode.add(new Option("그대로 두기","keep"));
       const auto = new Option("자동 중복 배정","auto"), manual = new Option("추가 학생 직접 선택","manual");
       auto.disabled = manual.disabled = !candidates.length;
       mode.add(auto); mode.add(manual);
       label.append(mode); panel.append(label);
-      const candidateLabel = element("label","","중복 배정할 학생");
+      const candidateLabel = element("label","","중복 배정할 학생 "+additions+"명");
       const select = element("select");
+      if (additions > 1) {
+        select.multiple = true;
+        select.size = Math.min(6,candidates.length);
+        candidateLabel.append(element("span","small","Ctrl(Windows) 또는 ⌘(Mac)를 누른 채 여러 학생을 선택할 수 있어요."));
+      }
       candidateLabel.append(select); candidateLabel.hidden = true;
       panel.append(candidateLabel);
       if (!candidates.length) panel.append(element("p","small","같은 편성 조건을 충족하는 다른 학생이 없습니다."));
+      else if (additions < needed) panel.append(element("p","small","같은 편성 조건을 충족하는 학생을 최대 "+additions+"명까지 추가할 수 있습니다."));
       mode.addEventListener("change", () => {
         candidateLabel.hidden = mode.value !== "manual";
         if (!candidateLabel.hidden && !select.options.length) {
-          select.add(new Option("학생을 선택하세요",""));
+          if (!select.multiple) select.add(new Option("학생을 선택하세요",""));
           for (const [candidateIndex,candidate] of candidates.entries()) {
             select.add(new Option(candidate.class+"반 "+candidate.number+"번 "+candidate.name,candidateIndex));
           }
         }
         get("singleton-status").textContent = "";
       });
-      return {index,candidates,mode,select,panel};
+      return {index,candidates,additions,mode,select,panel};
     });
     singletonPlan = {teams,studentCount,choices};
     get("singleton-teams").replaceChildren(...choices.map(choice => choice.panel));
@@ -304,9 +329,10 @@
   get("confirm-singletons").addEventListener("click", () => {
     if (!singletonPlan) return;
     const {teams,studentCount,choices} = singletonPlan;
-    const missing = choices.find(({mode,select}) => mode.value === "manual" && select.value === "");
+    const selected = select => [...select.selectedOptions].filter(option => option.value !== "");
+    const missing = choices.find(({mode,select,additions}) => mode.value === "manual" && selected(select).length !== additions);
     if (missing) {
-      get("singleton-status").textContent = (missing.index+1)+"팀에 중복 배정할 학생을 선택해 주세요.";
+      get("singleton-status").textContent = (missing.index+1)+"팀에 중복 배정할 학생 "+missing.additions+"명을 선택해 주세요.";
       missing.select.focus();
       return;
     }
@@ -316,10 +342,18 @@
       uses.set(candidate,(uses.get(candidate) ?? 0)+1);
     };
     for (const {index,candidates,mode,select} of choices) {
-      if (mode.value === "manual") add(index,candidates[Number(select.value)]);
+      if (mode.value === "manual") {
+        for (const option of selected(select)) add(index,candidates[Number(option.value)]);
+      }
     }
-    for (const {index,candidates,mode} of choices) {
-      if (mode.value === "auto") add(index,TeamBalance.chooseDuplicate(teams[index][0],candidates,conditions,uses));
+    for (const {index,candidates,mode,additions} of choices) {
+      if (mode.value !== "auto") continue;
+      const available = [...candidates];
+      for (let count = 0; count < additions; count++) {
+        const candidate = TeamBalance.chooseDuplicate(teams[index],available,conditions,uses);
+        add(index,candidate);
+        available.splice(available.indexOf(candidate),1);
+      }
     }
     singletonDialog.close();
     finishTeams(teams,studentCount);
@@ -327,12 +361,19 @@
   function generate() {
     try {
       const students = chosen();
-      const sizeMode = document.querySelector('input[name="size-mode"]:checked').value === "size";
+      const mode = document.querySelector('input[name="size-mode"]:checked').value;
+      if (mode === "individual") {
+        if (!students.length) throw new Error("편성할 반과 학생 명단을 선택해 주세요.");
+        finishTeams(students.map(student => [student]), students.length, true);
+        return;
+      }
+      const sizeMode = mode === "size";
       const target = Number(get(sizeMode ? "team-capacity" : "team-count").value);
       const teams = TeamBalance.makeTeams(students,target,conditions,sizeMode);
-      const singletons = teams.flatMap((team,index) => team.length === 1 ? [index] : []);
-      if (singletons.length && (!sizeMode || target > 1)) {
-        askAboutSingletons(teams,singletons,students.length);
+      const largestSize = Math.max(...teams.map(team => team.length));
+      const smallerTeams = teams.flatMap((team,index) => team.length < largestSize ? [index] : []);
+      if (smallerTeams.length) {
+        askAboutSmallerTeams(teams,smallerTeams,students.length,largestSize);
         return;
       }
       finishTeams(teams,students.length);
@@ -356,9 +397,10 @@
   });
   for (const id of ["team-count","team-capacity"]) get(id).addEventListener("input", clearResults);
   for (const radio of document.querySelectorAll('input[name="size-mode"]')) radio.addEventListener("change", () => {
-    const sizeMode = radio.value === "size";
-    for (const id of ["team-count","team-count-label","team-count-unit"]) get(id).hidden = sizeMode;
-    for (const id of ["team-capacity","team-capacity-label","team-capacity-unit"]) get(id).hidden = !sizeMode;
+    const individual = radio.value === "individual";
+    for (const id of ["team-count","team-count-label","team-count-unit"]) get(id).hidden = radio.value !== "count";
+    for (const id of ["team-capacity","team-capacity-label","team-capacity-unit"]) get(id).hidden = radio.value !== "size";
+    for (const control of document.querySelectorAll(".condition-groups button, #reset-conditions")) control.disabled = individual;
     clearResults();
   });
   get("generate").addEventListener("click",generate);
@@ -441,11 +483,13 @@
     clearResults(); renderClasses(); renderRoster();
     if (!storageProblem) message("다른 탭에서 변경한 저장 명단을 반영했습니다.");
   });
-  const fixtures = FixtureView.init(get,element,teamCards,() => result, () => !get("editor").hidden);
+  const fixtures = FixtureView.init(get,element,teamCards,() => ({teams:result,individual:individualResult}), () => !get("editor").hidden);
   const images = TeamImage.init(get);
   get("save-teams-image").addEventListener("click", () => images.open({
-    title:"팀편성 결과", subtitle:result.length+"팀 · "+result.flat().length+"명", private:true,
-    cards:result.map((members,index) => ({title:(index+1)+"팀 · "+members.length+"명",
+    title:individualResult ? "개인전 참가자" : "팀편성 결과",
+    subtitle:individualResult ? result.length+"명" : result.length+"팀 · "+result.flat().length+"명", private:true,
+    cards:individualResult ? [{title:"참가자",lines:result.map(([student]) => ({text:student.class+"반 "+student.number+"번 "+student.name}))}] :
+      result.map((members,index) => ({title:(index+1)+"팀 · "+members.length+"명",
       lines:members.map(student => ({text:student.class+"반 "+student.number+"번  "+student.name+(student.duplicate ? " (중복)" : ""),
         color:showGenderColors ? (student.gender === "남" ? "male" : "female") : ""}))}))
   }));

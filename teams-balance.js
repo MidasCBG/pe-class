@@ -117,19 +117,19 @@
     return shuffled(groups.flatMap((group, index) => balanceGroup(group, counts[index], conditions)))
       .map(team => team.sort((a, b) => a.class.localeCompare(b.class, "ko", {numeric:true}) || a.number - b.number));
   }
-  function singletonCandidates(teams, index, conditions) {
+  function duplicateCandidates(teams, index, conditions) {
     const [student] = teams[index];
     const separate = ["class","gender","height"].filter(field => conditions[field] === "separate");
     return teams.flatMap((members,teamIndex) => teamIndex === index ? [] : members)
       .filter(candidate => separate.every(field => candidate[field] === student[field]));
   }
-  function chooseDuplicate(student, candidates, conditions, uses) {
-    const score = candidate =>
+  function chooseDuplicate(members, candidates, conditions, uses) {
+    const score = candidate => members.reduce((total,student) => total +
       Number(conditions.gender === "mix" && candidate.gender === student.gender)*2 +
-      Number(conditions.class === "mix" && candidate.class === student.class);
+      Number(conditions.class === "mix" && candidate.class === student.class),0);
     return shuffled(candidates).sort((a,b) =>
       score(a)-score(b) || (uses.get(a) ?? 0)-(uses.get(b) ?? 0))[0];
   }
-  root.TeamBalance = {makeTeams,singletonCandidates,chooseDuplicate};
+  root.TeamBalance = {makeTeams,duplicateCandidates,chooseDuplicate};
   if (typeof module !== "undefined" && module.exports) module.exports = root.TeamBalance;
 })(globalThis);

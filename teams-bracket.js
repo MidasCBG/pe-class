@@ -1,8 +1,20 @@
 "use strict";
 const TeamBracket = (() => {
-  const cardWidth = 152, cardHeight = 104, columnStep = 178, rowStep = 118;
+  const cardWidth = 164, columnStep = 190;
+  function splitLines(text, width) {
+    const lines = [];
+    let rest = text.trim();
+    while (rest.length > width) {
+      const space = rest.lastIndexOf(" ", width);
+      const end = space > 0 ? space : width;
+      lines.push(rest.slice(0,end));
+      rest = rest.slice(end).trimStart();
+    }
+    if (rest) lines.push(rest);
+    return lines;
+  }
 
-  function diagrams(bracket, resolved, teamName) {
+  function diagrams(bracket, resolved, teamName, memberNames) {
     const {teamOf,outcomes} = resolved;
     const matches = new Map(bracket.matches.map(match => [match.id,match]));
     const byes = new Set(bracket.stages.flatMap(stage => stage.idle));
@@ -22,6 +34,16 @@ const TeamBracket = (() => {
         ref.match+"경기 "+(ref.outcome === "winner" ? "승자" : "패자");
       return byes.has(ref) ? name+" · 부전승" : name;
     }
+    const slotsByMatch = new Map(bracket.matches.map(match => [match.id, [match.a,match.b].map(ref => {
+      const team = teamOf(ref);
+      const name = label(ref);
+      const members = team === undefined ? "" : memberNames(team);
+      return {label:name, titleLines:splitLines(name,10), memberLines:splitLines(members,11)};
+    })]));
+    const slotHeight = Math.max(36, ...Array.from(slotsByMatch.values()).flat().map(slot =>
+      8 + slot.titleLines.length * 16 + slot.memberLines.length * 13));
+    const cardHeight = 50 + 2 * slotHeight;
+    const rowStep = cardHeight + 14;
     return bracket.matches.filter(match => !winnerInputs.has(match.id)).sort((a,b) =>
       rankByMatch.get(a.id)-rankByMatch.get(b.id)).map(final => {
       const nodes = [], lines = [];
@@ -29,8 +51,8 @@ const TeamBracket = (() => {
         const refs = [match.a,match.b];
         const participants = refs.map(teamOf);
         const winner = outcomes.get(match.id)?.winner;
-        const node = {id:match.id,x,y,final:match === final,participants,slots:refs.map((ref,index) => ({
-          label:label(ref), won:winner !== undefined && participants[index] === winner
+        const node = {id:match.id,x,y,final:match === final,participants,slots:slotsByMatch.get(match.id).map((slot,index) => ({
+          ...slot, won:winner !== undefined && participants[index] === winner
         }))};
         nodes.push(node);
         return node;
@@ -39,7 +61,7 @@ const TeamBracket = (() => {
         const fromX = child.x + (side < 0 ? cardWidth : 0);
         const toX = parent.x + (side > 0 ? cardWidth : 0);
         const fromY = child.y + cardHeight/2;
-        const toY = parent.y + 44 + slot*34;
+        const toY = parent.y + 42 + slotHeight/2 + slot*(slotHeight+4);
         const bend = (fromX+toX)/2;
         lines.push([[fromX,fromY],[bend,fromY],[bend,toY],[toX,toY]]);
       }
@@ -77,8 +99,8 @@ const TeamBracket = (() => {
       for (const line of lines) for (const point of line) { point[0] += 12+halfWidth; point[1] += 12-minY; }
       const rank = rankByMatch.get(final.id);
       const title = rank === 1 ? "결승 대진" : rank+"·"+(rank+1)+"위 결정전";
-      return {title,width,height,nodes,lines};
+      return {title,width,height,nodes,lines,cardWidth,cardHeight,slotHeight};
     });
   }
-  return {diagrams,cardWidth,cardHeight};
+  return {diagrams};
 })();

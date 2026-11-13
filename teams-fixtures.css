@@ -17,10 +17,6 @@
 .fixture-play-order p{margin-top:5px}
 .fixture-play-order ol{margin:6px 0 0;padding-left:25px;font-size:14px}
 .fixture-player-warning{background:#fff4df;color:#714619;border-radius:6px}
-.size-mode{border:0;padding:0;margin:0;display:flex;gap:12px;flex-wrap:wrap}
-.size-mode legend{font-size:13px;color:#535e59;margin-bottom:2px}
-.size-mode label{font-size:14px;font-weight:700;display:flex;align-items:center;gap:4px}
-.size-mode input{min-height:auto;accent-color:var(--accent)}
 .image-button,#import-teams{color:#3e4271;background:#f0f0f9;border-color:#d5d7eb}
 .gender-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .gender-color-button{display:inline-flex;align-items:center;gap:7px;min-height:34px;font-size:14px}
@@ -36,8 +32,13 @@
 #split-message{color:#8b3f32;margin-top:5px}
 #split-message:empty{display:none}
 .fixture-selects select,.group-picker select,.image-options select{border-color:#d3d6e4;font-size:14px;max-width:100%}
-.fixture-team-list,.fixture-schedule{display:grid;min-height:95px;overflow:auto;align-content:start;gap:8px;flex:1}
-.fixture-team-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fixture-workspace{grid-template-columns:clamp(255px,29%,385px) minmax(0,1fr)}
+.fixture-roster .card-header,.fixture-board .card-header{flex-wrap:wrap}
+.fixture-team-list,.fixture-schedule{display:grid;min-width:0;min-height:95px;overflow:auto;grid-auto-rows:max-content;align-content:start;gap:8px;flex:1}
+.fixture-team-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.fixture-team-list .team-box header,.fixture-team-list .team-box li{padding-inline:6px;gap:4px}
+.fixture-team-list .team-card-title{gap:4px}
+.fixture-team-list .team-number{min-width:22px;height:22px;padding-inline:3px;font-size:12px}
 .fixture-team-list>.empty{grid-column:1/-1}
 .group-picker{padding:6px 9px;display:grid;gap:3px;font-size:13px;font-weight:700;color:#434a6d;border-bottom:1px solid #edf0ec}
 #fixture-status:empty,#image-status:empty{display:none}
@@ -51,11 +52,12 @@
 .league-heading,.bracket-title{padding:9px 13px;background:#34385c;color:#fff}
 .bracket-title{text-align:center}
 .league-heading{display:flex;justify-content:space-between;gap:8px;align-items:center}
-.league-heading span{color:#e6e9f8;font-size:13px}
+.league-heading h3,.match-note,.fixture-play-order li{overflow-wrap:anywhere}
+.league-heading span{color:#e6e9f8;font-size:13px;white-space:nowrap}
 .league-teams,.bracket-ranks ul{margin:0;padding:8px 12px;list-style:none;display:flex;flex-wrap:wrap;gap:5px}
 .league-teams li,.bracket-ranks li{background:#eff0f8;color:#34385c;border-radius:7px;padding:3px 8px;font-size:14px;font-weight:700}
 .league-standings{width:calc(100% - 24px);margin:0 12px 10px;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.league-standings th,.league-standings td{padding:4px;text-align:center;border-bottom:1px solid #edf0f4;font-size:14px;position:static}
+.league-standings th,.league-standings td{padding:4px;text-align:center;border-bottom:1px solid #edf0f4;font-size:14px;position:static;overflow-wrap:anywhere}
 .league-standings thead{background:#f1f2f8;color:#353961}
 .league-rounds{padding:0 12px 12px;display:grid;gap:8px}
 .league-round{border:1px solid #e4e7ef;border-radius:8px;overflow:hidden}
@@ -70,10 +72,14 @@
 .bracket-chart{position:relative;margin-inline:auto}
 .bracket-chart svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .bracket-chart polyline{fill:none;stroke:#66708d;stroke-width:2}
-.bracket-game{box-sizing:border-box;position:absolute;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:18px 30px 30px;gap:4px;padding:7px 8px;background:#fff;border:1px solid #c3c9db;border-radius:10px;text-align:center}
+.bracket-game{box-sizing:border-box;position:absolute;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:30px repeat(2,var(--match-slot-height));gap:4px;padding:7px 8px;background:#fff;border:1px solid #c3c9db;border-radius:10px;text-align:center}
 .bracket-final{border-color:#696f99;background:#f3f4fb}
-.match-id{font-size:12px;color:#454b6b;font-weight:800;text-align:left}
-.match-side{position:relative;width:100%;height:30px;min-height:0;padding:2px 18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:7px;font-size:13px;line-height:1.2}
+.match-id{font-size:12px;line-height:1.4;color:#454b6b;font-weight:800;text-align:left;align-self:center;overflow-wrap:anywhere}
+.match-side{position:relative;width:100%;min-width:0;min-height:30px;padding:1px 13px 1px 6px;overflow-wrap:anywhere;border-radius:7px;font-size:13px;line-height:1.2}
+.match-team-name,.match-members{display:block}
+.match-side .match-members{font-size:11px;line-height:13px;font-weight:500}
+.bracket-game .match-team-name,.bracket-game .match-members{white-space:pre-wrap}
+.bracket-game .match-team-name{line-height:16px}
 .match-side:disabled{opacity:1;color:#5e6577;background:#f6f7fa}
 .match-side[aria-pressed=true]{background:#e5eee8;border-color:#9aba9f;color:#275134}
 .match-side[aria-pressed=true]::after{content:"✓";position:absolute;right:5px;top:50%;transform:translateY(-50%)}
@@ -88,6 +94,4 @@
 .image-options{display:grid;gap:10px;margin:13px 0}
 .image-options label{display:grid;grid-template-columns:98px minmax(0,1fr)}
 #image-size,#image-status{font-size:13px}
-@media(max-width:900px){.fixture-team-list{grid-template-columns:1fr}}
-@media(max-width:760px){.fixture-team-list,.fixture-schedule{overflow:visible}.fixture-team-list{grid-template-columns:repeat(2,minmax(0,1fr))}.fixture-board .card-header{flex-wrap:wrap}}
-@media(max-width:450px){.fixture-team-list{grid-template-columns:1fr}}
+@media(max-width:760px){.fixture-team-list,.fixture-schedule{overflow:visible}}

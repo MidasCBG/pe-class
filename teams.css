@@ -26,6 +26,8 @@ h3{font-size:17px;letter-spacing:-.035em}
 .card-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #roster-count,#selected-count{font-size:14px;font-weight:650;color:#607266}
 .subtle{padding:3px 5px;min-height:32px;border:0;background:transparent;font-size:13px;color:#59685d}
+#reset-conditions{border:1px solid #a6aed0;background:#eef0fa;color:#414875;padding-inline:9px}
+#reset-conditions:hover:not(:disabled){border-color:#7179ba;background:#e2e6f7}
 .primary{background:var(--accent);border-color:var(--accent);color:white}
 .primary:hover{background:#5b608e}
 .minor{font-size:14px}
@@ -46,6 +48,10 @@ h3{font-size:17px;letter-spacing:-.035em}
 #singleton-teams{display:grid;gap:8px;margin-top:12px}
 .singleton-option{display:grid;gap:6px;border:1px solid var(--line);border-radius:9px;padding:9px}
 .singleton-option label{display:grid;gap:4px;font-size:13px;font-weight:700}
+.singleton-roster{display:grid;gap:3px;font-size:13px;color:#43564a}
+.singleton-roster span{font-weight:700}
+.singleton-roster ul{display:flex;flex-wrap:wrap;gap:4px;margin:0;padding:0;list-style:none}
+.singleton-roster li{padding:2px 6px;border-radius:5px;background:#edf2ed;overflow-wrap:anywhere;min-width:0}
 .singleton-option select{width:100%}
 #singleton-status{color:#8b3f32}
 table{width:100%;border-collapse:collapse;font-size:15px;text-align:left}
@@ -67,14 +73,23 @@ td:last-child{font-weight:700}
 .editor-actions>span{flex:1}
 .condition-title{display:flex;align-items:center;justify-content:space-between}
 .conditions{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#f8faf7;display:grid;gap:7px}
-.condition-groups{display:flex;gap:6px;flex-wrap:wrap}
-.condition-groups fieldset{margin:0;border:0;padding:0;display:flex;gap:4px;flex-wrap:wrap}
-.condition-groups legend{font-size:12px;font-weight:750;color:#697367;margin-bottom:4px}
-.condition-groups button{font-size:13px;min-height:34px;padding:5px 9px}
-.condition-groups button[aria-pressed=true]{color:#343d6b;background:#e7e9f6;border-color:#929ac6}
-.generate-row{display:flex;align-items:center;gap:8px;padding-top:5px;font-size:15px;font-weight:750}
-.generate-row input{width:65px}
-.generate-row .primary{margin-left:auto}
+.condition-groups{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1.1fr) minmax(0,1.55fr);gap:6px}
+.condition-groups fieldset{min-width:0;margin:0;border:1px solid #cbd5ce;border-radius:9px;padding:2px 4px 4px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;background:#f0f4ef}
+.condition-groups legend{font-size:12px;font-weight:750;color:#4f6053;padding-inline:4px}
+.condition-groups fieldset button{min-width:0;font-size:clamp(12px,1.15vw,13px);min-height:34px;padding:3px;line-height:1.25;overflow-wrap:anywhere}
+.condition-groups button[aria-pressed=true],.size-options input:checked+span{color:#343d6b;background:#e7e9f6;border-color:#929ac6}
+.condition-help{font-size:12px;letter-spacing:-.025em}
+.size-mode{min-width:0;padding:4px;border:1px solid #cbd5ce;border-radius:9px;background:#f0f4ef}
+.size-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.size-options label{position:relative;min-width:0;cursor:pointer}
+.size-options input{position:absolute;width:1px;height:1px;min-height:0;margin:0;opacity:0}
+.size-options span{display:grid;place-items:center;min-height:34px;padding:3px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center;font-size:13px;font-weight:700}
+.size-options label:hover span{border-color:#8c92b6}
+.size-options input:focus-visible+span{outline:3px solid #7179ba;outline-offset:2px}
+.size-inputs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 4px 0;color:#414875;font-size:13px;font-weight:750}
+.size-inputs:not(:has(input:not([hidden]))){display:none}
+.size-inputs input{width:65px;min-height:34px;border-color:#a6aed0;background:#fff}
+.generate-row{display:flex;justify-content:flex-end}
 .result-summary{font-size:14px;color:#4c5e50;min-height:20px}
 .team-results{flex:1;overflow:auto;min-height:100px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;gap:10px}
 .results-empty{grid-column:1/-1;align-self:center;padding:35px 12px}
@@ -108,3 +123,4 @@ dialog::backdrop{background:#172c24a3}
 @media(max-width:1050px){.team-page{padding:13px;gap:9px}.workspace{grid-template-columns:minmax(280px,.95fr) minmax(330px,1.1fr);gap:10px}.card{padding:12px}.privacy{font-size:12px}.condition-groups button{font-size:12px;padding:5px 7px}}
 @media(max-width:760px){.team-page{height:auto;min-height:100svh}.workspace{display:flex;flex-direction:column}.card{min-height:350px}.roster-scroll{max-height:320px}.student-rows{max-height:500px}.team-results{overflow:visible}.local-badge{font-size:12px}.page-heading{align-items:flex-start}.privacy{font-size:13px}.condition-groups button{font-size:14px}h1{font-size:26px}}
 @media(max-width:400px){.team-results{grid-template-columns:1fr}.team-page{padding:10px}.card{padding:11px}.local-badge{display:none}.student-row{gap:5px}}
+@media(max-width:480px){.condition-groups{grid-template-columns:repeat(2,minmax(0,1fr))}}

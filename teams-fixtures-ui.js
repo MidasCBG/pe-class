@@ -22,7 +22,20 @@ const FixtureView = (() => {
     const groupMode = () => ["groups","split"].includes(setup());
     const manual = () => groupMode() && get("fixture-assignment").value === "manual";
     const groupsCount = () => setup() === "split" ? 2 : Number(get("fixture-group-count").value);
-    const teamName = id => (id+1)+"팀";
+    let individual = false;
+    const teamName = id => {
+      if (!individual) return (id+1)+"팀";
+      const student = teams[id][0];
+      return student.class+"반 "+student.number+"번 "+student.name;
+    };
+    const memberNames = id => individual ? "" : teams[id].map(student => student.name).join(", ");
+    const entrantCount = () => teams.length+(individual ? "명" : "팀");
+    function matchSide(label, members) {
+      const button = el("button","match-side");
+      button.append(el("span","match-team-name",label));
+      if (members) button.append(el("span","match-members",members));
+      return button;
+    }
     const groupName = id => setup() === "split" ? ["상위조","하위조"][id] : (id+1)+"조";
     const status = value => { get("fixture-status").textContent = value; };
     const splitMessage = value => { get("split-message").textContent = value; };
@@ -36,7 +49,7 @@ const FixtureView = (() => {
       try {
         if (!teams.length) localStorage.removeItem(storageKey);
         else localStorage.setItem(storageKey,JSON.stringify({
-          version:1,teams,schedule,picks:[...picks],leaguePicks:[...leaguePicks]
+          version:1,teams,individual,schedule,picks:[...picks],leaguePicks:[...leaguePicks]
         }));
         return true;
       } catch {
@@ -50,7 +63,7 @@ const FixtureView = (() => {
       window.frameElement?.classList.remove("fixture-expanded");
     }
     get("expand-fixtures").addEventListener("click", () => {
-      get("presentation-mode").textContent = schedule.name+" · "+teams.length+"팀";
+      get("presentation-mode").textContent = schedule.name+" · "+entrantCount();
       window.frameElement?.classList.add("fixture-expanded");
       get("presentation-body").append(rows);
       presentation.showModal();
@@ -67,7 +80,7 @@ const FixtureView = (() => {
       get("expand-fixtures").disabled = true;
     }
     function renderTeams() {
-      get("fixture-count").textContent = teams.length+"팀";
+      get("fixture-count").textContent = entrantCount();
       get("fixture-team-list").replaceChildren(...(teams.length ? teamCards(teams, index => {
         if (!manual()) return;
         const label = el("label","group-picker","배정할 조 ");
@@ -82,10 +95,10 @@ const FixtureView = (() => {
         });
         label.append(select);
         return label;
-      }) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
+      }, individual) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
     }
     function clear() {
-      teams = []; assignments = [];
+      teams = []; individual = false; assignments = [];
       get("parallel-games").value = "";
       for (const id of ["same-class","split-by-class","split-by-gender"]) setPressed(id,false);
       splitMessage("");
@@ -240,7 +253,7 @@ const FixtureView = (() => {
           for (const {a,b,key} of round.games) {
             const match = el("div","league-match");
             const buttons = [a,b].map(team => {
-              const button = el("button","match-side",teamName(team));
+              const button = matchSide(teamName(team),memberNames(team));
               button.type = "button";
               button.setAttribute("aria-label",round.number+"라운드 "+teamName(team)+" 승리");
               button.addEventListener("click", () => {
@@ -269,7 +282,7 @@ const FixtureView = (() => {
     }
     function renderBracket(focusMatch,focusTeam) {
       const resolved = TeamFixtures.resolve(bracket,picks);
-      diagrams = TeamBracket.diagrams(bracket,resolved,teamName);
+      diagrams = TeamBracket.diagrams(bracket,resolved,teamName,memberNames);
       rankLines = bracket.ranks.map((ref,i) => {
         const team = resolved.teamOf(ref);
         return (i+1)+"위 · "+(team === undefined ? "미정" : teamName(team));
@@ -302,17 +315,18 @@ const FixtureView = (() => {
           const {id,participants:[left,right]} = node;
           const card = el("div",node.final ? "bracket-game bracket-final" : "bracket-game");
           card.style.left = node.x+"px"; card.style.top = node.y+"px";
-          card.style.width = TeamBracket.cardWidth+"px";
-          card.style.height = TeamBracket.cardHeight+"px";
+          card.style.width = diagram.cardWidth+"px";
+          card.style.height = diagram.cardHeight+"px";
+          card.style.setProperty("--match-slot-height",diagram.slotHeight+"px");
           const round = roundOfMatch.get(id);
           const collision = samePlayerOnBothTeams(left,right);
           node.caption = (round ? round+"R · " : "")+id+"경기"+(node.final && index === 0 ? " · 결승" : "")+(collision ? " ⚠" : "");
           const caption = el("span","match-id",node.caption);
           if (collision) caption.title = sharedMatchWarning;
           card.append(caption);
-          for (const [slot,{label,won}] of node.slots.entries()) {
+          for (const [slot,{label,titleLines,memberLines,won}] of node.slots.entries()) {
             const team = node.participants[slot];
-            const button = el("button","match-side",label);
+            const button = matchSide(titleLines.join("\n"),memberLines.join("\n"));
             button.type = "button"; button.disabled = left === undefined || right === undefined;
             button.title = label;
             button.setAttribute("aria-pressed",String(won));
@@ -331,7 +345,7 @@ const FixtureView = (() => {
         viewport.scrollLeft = horizontal[index] ?? Math.max(0,(viewport.scrollWidth-viewport.clientWidth)/2);
       }
       const ranks = el("section","bracket-ranks");
-      ranks.append(el("h3","",schedule.mode === "single" ? "우승 팀" : "전체 순위"));
+      ranks.append(el("h3","",schedule.mode === "single" ? (individual ? "우승자" : "우승 팀") : "전체 순위"));
       const list = el("ul");
       for (const line of rankLines) list.append(el("li","",line));
       ranks.append(list);
@@ -366,19 +380,21 @@ const FixtureView = (() => {
     });
     get("import-teams").addEventListener("click", () => {
       if (editing()) { status("팀편성으로 돌아가 명단 편집을 마쳐 주세요."); return; }
-      if (!readTeams().length) { status("팀편성 화면에서 먼저 팀을 편성해 주세요."); return; }
-      const incoming = readTeams().map(team => team.map(({name,number,gender,class:className,duplicate}) => ({
+      const result = readTeams();
+      if (!result.teams.length) { status("팀편성 화면에서 먼저 팀을 편성해 주세요."); return; }
+      const incoming = result.teams.map(team => team.map(({name,number,gender,class:className,duplicate}) => ({
         name,number,gender,class:className,...(duplicate ? {duplicate:true} : {})
       })));
-      if (JSON.stringify(teams) === JSON.stringify(incoming)) { status("현재 편성된 팀을 이미 가져왔습니다."); return; }
+      if (individual === result.individual && JSON.stringify(teams) === JSON.stringify(incoming)) { status("현재 편성을 이미 가져왔습니다."); return; }
       teams = incoming; assignments = [];
+      individual = result.individual;
       splitMessage("");
       if (pressed("split-by-gender") && hasMixedGender()) {
         setPressed("split-by-gender",false);
         splitMessage(mixedGenderMessage);
       }
       renderTeams(); resetSchedule();
-      if (persist()) status(teams.length+"팀을 기존 팀 번호 그대로 가져왔습니다.");
+      if (persist()) status(individual ? "개인전 참가자 "+entrantCount()+"을 가져왔습니다." : entrantCount()+"을 기존 팀 번호 그대로 가져왔습니다.");
     });
     get("fixture-family").addEventListener("change",updateModes);
     get("fixture-mode").addEventListener("change",updateOptions);
@@ -446,18 +462,26 @@ const FixtureView = (() => {
         renderSchedule(); persist();
       } catch (error) { status(error.message); }
     });
-    const resetDialog = get("fixture-reset-dialog");
-    get("reset-fixtures").addEventListener("click", () => resetDialog.showModal());
-    get("cancel-fixture-reset").addEventListener("click", () => resetDialog.close());
-    get("confirm-fixture-reset").addEventListener("click", () => {
-      if (clear()) status("참가 팀과 대진표를 초기화했습니다.");
-      resetDialog.close();
-    });
+    function bindReset(button, dialogId, action, confirmation) {
+      const dialog = get(dialogId+"-dialog");
+      get(button).addEventListener("click", () => dialog.showModal());
+      get("cancel-"+dialogId).addEventListener("click", () => dialog.close());
+      get("confirm-"+dialogId).addEventListener("click", () => {
+        if (action()) status(confirmation);
+        dialog.close();
+      });
+    }
+    bindReset("reset-fixtures","fixture-reset",() => {
+      resetSchedule();
+      return persist();
+    },"대진표와 승패 기록을 초기화했습니다.");
+    bindReset("reset-fixture-teams","fixture-teams-reset",clear,"대진편성의 참가 팀과 대진표를 초기화했습니다.");
     function restore() {
       try {
         const saved = JSON.parse(localStorage.getItem(storageKey));
         resetSchedule();
         teams = saved?.version === 1 && Array.isArray(saved.teams) ? saved.teams : [];
+        individual = saved?.individual === true && teams.every(team => team.length === 1);
         assignments = [];
         get("parallel-games").value = "";
         for (const id of ["same-class","split-by-class","split-by-gender"]) setPressed(id,false);
@@ -482,7 +506,7 @@ const FixtureView = (() => {
         }
         renderTeams();
       } catch {
-        teams = []; assignments = []; resetSchedule(); renderTeams();
+        teams = []; individual = false; assignments = []; resetSchedule(); renderTeams();
         status("저장된 대진표를 읽을 수 없습니다. 초기화한 뒤 다시 만들어 주세요.");
       }
     }
@@ -491,10 +515,10 @@ const FixtureView = (() => {
     });
     function exportSchedule() {
       return {
-        title:"대진표", subtitle:schedule.name+" · "+teams.length+"팀",
+        title:"대진표", subtitle:schedule.name+" · "+entrantCount(), private:true,
         diagrams,
         cards:bracket ? [
-          {title:schedule.mode === "single" ? "우승 팀" : "전체 순위",lines:rankLines.map(text => ({text}))},
+          {title:schedule.mode === "single" ? (individual ? "우승자" : "우승 팀") : "전체 순위",lines:rankLines.map(text => ({text}))},
           ...(playRounds.length ? [{title:"경기 진행 순서",lines:playRounds.map((round,index) =>
             ({text:(index+1)+"라운드 · "+round.map(({id}) => id+"경기").join(" / ")}))}] : [])
         ] :
@@ -504,7 +528,8 @@ const FixtureView = (() => {
               {text:round.number+"라운드",heading:true},
               ...round.games.map(({a,b,key}) => {
                 const winner = leaguePicks.get(key);
-                return {text:teamName(a)+" vs "+teamName(b)+(winner === undefined ? "" : " · "+teamName(winner)+" 승")+
+                const nameWithMembers = team => individual ? teamName(team) : teamName(team)+" ("+memberNames(team)+")";
+                return {text:nameWithMembers(a)+" vs "+nameWithMembers(b)+(winner === undefined ? "" : " · "+teamName(winner)+" 승")+
                   (samePlayerOnBothTeams(a,b) ? " · 출전 팀 확인" : "")};
               }),
               ...round.idle.map(team => ({text:"쉬는 팀 · "+teamName(team)}))

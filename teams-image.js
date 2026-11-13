@@ -63,8 +63,9 @@ const TeamImage = (() => {
       });
       return [pageSize(page)];
     }
-    const viewHeight = 1180, overlap = TeamBracket.cardHeight+12;
     const diagramPages = source.diagrams.flatMap(diagram => {
+      const overlap = diagram.cardHeight+12;
+      const viewHeight = Math.max(1180,overlap+360);
       const slices = [];
       for (let offset = 0; offset < diagram.height; offset += viewHeight-overlap) {
         const height = Math.min(viewHeight,diagram.height-offset);
@@ -92,20 +93,23 @@ const TeamImage = (() => {
       for (const point of points) ctx.lineTo(...point);
       ctx.stroke();
     }
-    const {cardWidth,cardHeight} = TeamBracket;
+    const {cardWidth,cardHeight,slotHeight} = diagram;
     for (const node of diagram.nodes) {
       ctx.fillStyle = node.final ? "#f3f4fb" : "#fff";
       ctx.strokeStyle = node.final ? "#696f99" : "#c3c9db";
       ctx.beginPath(); ctx.roundRect(node.x,node.y,cardWidth,cardHeight,10); ctx.fill(); ctx.stroke();
       ctx.fillStyle = "#454b6b"; ctx.font = font(14,true);
       ctx.fillText(node.caption ?? node.id+"경기",node.x+10,node.y+16,cardWidth-20);
-      node.slots.forEach(({label,won},index) => {
-        const rowY = node.y+30+index*34;
+      node.slots.forEach(({titleLines,memberLines,won},index) => {
+        const rowY = node.y+42+index*(slotHeight+4);
         ctx.fillStyle = won ? "#e5eee8" : "#f3f4f8";
-        ctx.beginPath(); ctx.roundRect(node.x+8,rowY,cardWidth-16,28,6); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(node.x+8,rowY,cardWidth-16,slotHeight,6); ctx.fill();
         ctx.fillStyle = won ? "#275134" : "#252a40";
         ctx.font = font(14,true);
-        ctx.fillText(label+(won ? " ✓" : ""),node.x+14,rowY+14,cardWidth-28);
+        titleLines.forEach((line,i) => ctx.fillText(line,node.x+14,rowY+15+i*16,cardWidth-36));
+        if (won) ctx.fillText("✓",node.x+cardWidth-23,rowY+15);
+        ctx.font = font(11);
+        memberLines.forEach((line,i) => ctx.fillText(line,node.x+14,rowY+14+titleLines.length*16+i*13,cardWidth-28));
       });
     }
     ctx.restore();
