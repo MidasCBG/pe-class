@@ -61,6 +61,8 @@ const railToggle = document.querySelector("#rail-reveal");
 const railEdge = railToggle.parentElement;
 const railPreview = preferenceDialog.querySelector(".rail-preview");
 const railPreviewTrigger = railPreview.querySelector(".rail-preview-trigger");
+const railPreviewPointer = railPreview.querySelector(".rail-preview-pointer");
+let railPreviewAnimation;
 const railPreviewNote = document.querySelector("#rail-preview-note");
 const railNotes = {
   fixed: "선택한 위치에 종목 이름과 아이콘을 항상 표시합니다.",
@@ -136,6 +138,7 @@ sportRail.addEventListener("click", event => {
 });
 
 function stopPreferenceSamples() {
+  stopRailPreviewDemo();
   sampleAnimation?.cancel();
   stopSoundTest();
 }
@@ -148,6 +151,7 @@ function activatePreferenceTab(tab, focus = false) {
     item.tabIndex = selected ? 0 : -1;
     document.getElementById(item.getAttribute("aria-controls")).hidden = !selected;
   }
+  if (tab.id === "pref-tab-rail") playRailPreviewDemo();
   if (focus) tab.focus();
 }
 
@@ -181,7 +185,38 @@ function setRailPreviewOpen(open) {
   railPreviewTrigger.setAttribute("aria-label", open ? "미리보기 메뉴 닫기" : "미리보기 메뉴 열기");
 }
 
-railPreviewTrigger.addEventListener("click", () => setRailPreviewOpen(!railPreview.hasAttribute("data-expanded")));
+function stopRailPreviewDemo() {
+  if (railPreviewAnimation) {
+    railPreviewAnimation.onfinish = null;
+    railPreviewAnimation.cancel();
+    railPreviewAnimation = null;
+  }
+  railPreviewPointer.setAttribute("hidden", "");
+}
+
+function playRailPreviewDemo() {
+  stopRailPreviewDemo();
+  if (!preferenceDialog.open || railPreview.dataset.mode !== "hidden") return;
+
+  setRailPreviewOpen(false);
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    setRailPreviewOpen(true);
+    return;
+  }
+
+  const right = railPreview.dataset.side === "right";
+  railPreviewPointer.removeAttribute("hidden");
+  railPreviewAnimation = railPreviewPointer.animate([
+    { left: right ? "38%" : "62%", top: "72%" },
+    { left: right ? "calc(100% - 17px)" : "11px", top: "calc(50% - 2px)" }
+  ], { duration: 780, easing: "ease-in-out", fill: "both" });
+  railPreviewAnimation.onfinish = () => setRailPreviewOpen(true);
+}
+
+railPreviewTrigger.addEventListener("click", () => {
+  stopRailPreviewDemo();
+  setRailPreviewOpen(!railPreview.hasAttribute("data-expanded"));
+});
 
 function playSpeedSample() {
   sampleAnimation?.cancel();
@@ -200,6 +235,7 @@ preferenceOpener.addEventListener("click", () => {
   renderPreferenceSamples();
   activatePreferenceTab(preferenceTabs[0]);
   preferenceDialog.showModal();
+  playRailPreviewDemo();
   preferenceTabs[0].focus();
 });
 preferenceDialog.querySelector("[data-close-preferences]").addEventListener("click", () => preferenceDialog.close());
@@ -223,6 +259,7 @@ preferenceForm.addEventListener("submit", event => {
 });
 preferenceForm.addEventListener("input", event => {
   renderPreferenceSamples();
+  if (event.target.name === "rail" || event.target.name === "railSide") playRailPreviewDemo();
   if (event.target.name === "speed") playSpeedSample();
 });
 document.querySelector("#preview-speed").addEventListener("click", playSpeedSample);

@@ -173,6 +173,23 @@ body:has(#teams-panel:not([hidden])) .app-sound { right: 10px; }
 .rail-options { display: flex; flex-wrap: wrap; gap: 12px; }
 .rail-options > fieldset { flex: 1 1 max-content; }
 .rail-preview-frame { position: relative; display: flex; gap: 8px; overflow: hidden; border-radius: 7px; }
+.rail-preview-pointer {
+  position: absolute;
+  z-index: 3;
+  width: 24px;
+  height: 28px;
+  fill: white;
+  stroke: #132c23;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 3px #132c2380);
+  pointer-events: none;
+}
+.rail-preview-pointer[hidden] { display: none; }
+.rail-preview[data-expanded] .rail-preview-pointer {
+  opacity: 0;
+  transition: opacity 180ms 180ms;
+}
 .rail-preview-edge { display: none; position: absolute; inset: 0 auto 0 0; width: 24px; z-index: 2; }
 .rail-preview[data-mode="hidden"] .rail-preview-edge { display: block; }
 .rail-preview .rail-preview-trigger { width: 26px; height: 36px; }
