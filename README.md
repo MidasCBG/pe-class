@@ -1,6 +1,6 @@
 # 체육 교실 · PE Class
 
-초등 체육 수업용 정적 웹앱입니다. 배드민턴, 플라잉디스크 얼티밋, 피구, 팀편성, 대진편성을 왼쪽 메뉴에서 선택합니다. 기리공작소 버전은 v2.0.7입니다.
+초등 체육 수업용 정적 웹앱입니다. 배드민턴, 플라잉디스크 얼티밋, 피구, 팀편성, 대진편성을 메뉴에서 선택합니다. 기리공작소 버전은 v.2.2.8입니다.
 
 - 배드민턴은 기존 규칙 시범과 유튜브 실사 영상을 사용합니다.
 - 얼티밋은 수업용 PPT를 바탕으로 경기장, 패스와 이동, 득점, 공격권 교체, 파울과 수비, 풀을 다룹니다. 기술 시범에는 백핸드, 포핸드, 양손 받기 영상이 있습니다.
@@ -9,6 +9,18 @@
 ## 로컬에서 보기
 
 이 폴더에서 `python -m http.server 8781 --bind 127.0.0.1`을 실행한 뒤 http://127.0.0.1:8781/ 을 엽니다.
+
+## 시범 효과음 출처
+
+아래 CC0 녹음에서 필요한 구간을 잘라 음량을 맞췄습니다.
+
+| 앱에서 들리는 소리 | 녹음 출처 |
+|---|---|
+| 배드민턴 타구 | Joseph SARDIN, [Badminton: racket shuttlecock](https://bigsoundbank.com/badminton-volant-sur-raquette-s0537.html) |
+| 셔틀콕 착지 | Joseph SARDIN, [Ping-pong ball, bounce #1](https://bigsoundbank.com/ping-pong-ball-bounce-1-s2236.html)을 가벼운 한 번의 접촉음으로 편집 |
+| 피구공 착지·접촉 | yfjesse, [Bouncing Ball Recordings](https://freesound.org/people/yfjesse/sounds/734241/)의 고무공 마룻바닥 착지 한 번 · Dedshot_Dyzek, [Sound FX Rubber Ball.1-Norm_01](https://freesound.org/people/Dedshot_Dyzek/sounds/769792/) |
+| 플라잉디스크 착지·포구 | cecilegatina, [Plastic tube](https://bigsoundbank.com/plastic-tube-s0628.html) · Andrew.Datz, [plastic lid opening.WAV](https://freesound.org/people/Andrew.Datz/sounds/650740/)에서 플라스틱 접촉음 사용 |
+| 공·디스크를 놓는 동작 | Joseph SARDIN, [Whoosh #5](https://bigsoundbank.com/whoosh-5-s1797.html)을 짧고 작게 편집 |
 
 ## 팀편성과 대진편성
 
@@ -34,4 +46,4 @@
 2. Settings → Pages에서 Deploy from a branch, `main`, `/ (root)`를 선택합니다.
 3. Actions에서 배포 성공을 확인한 뒤 Pages 주소를 엽니다. 같은 저장소를 업데이트할 때는 수정된 파일을 커밋하면 됩니다.
 
-공유한 버전을 표시하려면 배포 커밋에 `v2.0.7` 태그를 붙이거나 해당 태그로 GitHub Release를 만듭니다. 로컬 미리보기와 GitHub Pages는 주소가 달라 브라우저에 저장된 학생 명단과 대진 기록을 각각 관리합니다.
+공유한 버전을 표시하려면 배포 커밋에 `v.2.2.8` 태그를 붙이거나 해당 태그로 GitHub Release를 만듭니다. 로컬 미리보기와 GitHub Pages는 주소가 달라 브라우저에 저장된 학생 명단과 대진 기록을 각각 관리합니다.

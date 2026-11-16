@@ -24,14 +24,14 @@
           frames: [
             { label: "양 팀 대표가 상대 내야 쪽에 서요", players: [[450,205,"blue"],[390,205,"red"]], ball: [420,222] },
             { label: "주심이 공을 위로 띄워요", sound: "whistle", players: [[450,205,"blue"],[390,205,"red"]], path: "M420 222V131" },
-            { label: "파랑 대표가 자기 팀 쪽으로 쳐 보내요", sound: "throw", contact: "catch", players: [[450,192,"blue"],[390,192,"red"],[242,193,"blue"]], path: "M420 131Q345 122 263.25 193" }
+            { label: "파랑 대표가 자기 팀 쪽으로 쳐 보내요", sound: "release", contact: "ball-contact", players: [[450,192,"blue"],[390,192,"red"],[242,193,"blue"]], path: "M420 131Q345 122 263.25 193" }
           ] },
         { name: "점프볼 뒤 첫 공격", result: "내야에서 받으면 한 번 패스한 뒤 공격",
           detail: "내야에서 공을 확보했다면 먼저 같은 팀 외야로 패스해요. 점프볼에 참여한 선수는 공을 직접 잡아 첫 공격을 할 수 없어요.",
           frames: [
             { label: "파랑 내야가 공을 확보", players: [[242,202,"blue"],[624,19,"blue"],[560,223,"red"]], ball: [263.25,202] },
-            { label: "파랑 내야에서 옆쪽 파랑 외야로 패스", sound: "throw", contact: "catch", players: [[242,202,"blue"],[624,19,"blue"],[560,223,"red"]], path: "M263.25 202Q405 27 602.75 19" },
-            { label: "파랑 외야가 빨강 내야를 공격", sound: "throw", contact: "impact", players: [[242,202,"blue"],[624,19,"blue"],[560,223,"red"]], path: "M602.75 19Q628 134 560 223" }
+            { label: "파랑 내야에서 옆쪽 파랑 외야로 패스", sound: "release", contact: "ball-contact", players: [[242,202,"blue"],[624,19,"blue"],[560,223,"red"]], path: "M263.25 202Q405 27 602.75 19" },
+            { label: "파랑 외야가 빨강 내야를 공격", sound: "release", contact: "ball-contact", players: [[242,202,"blue"],[624,19,"blue"],[560,223,"red"]], path: "M602.75 19Q628 134 560 223" }
           ] },
         { name: "볼 아웃·반칙 뒤 재개", result: "공 들기 → 휘슬 기다리기 → 경기 재개",
           detail: "공을 받은 팀은 지정된 구역에서 공을 머리 위로 들어요. 주심이 휘슬을 분 뒤 패스하거나 공격해요.", diagram: "restart" },
@@ -49,7 +49,7 @@
           detail: "파랑이 던진 공이 아무에게도 닿지 않고 코트 밖으로 나갔어요. 파랑 내야에서 던졌든 외야에서 던졌든 빨강 내야에서 재개해요.",
           frames: [
             { label: "파랑 내야수가 던져요", players: [[265,199,"blue"],[550,252,"red"]], ball: [286.25,199] },
-            { label: "노터치 · 외야 경계 밖", sound: "throw", players: [[265,199,"blue"],[550,252,"red"]], path: "M286.25 199Q390 124 495 20" },
+            { label: "노터치 · 외야 경계 밖", sound: "release", players: [[265,199,"blue"],[550,252,"red"]], path: "M286.25 199Q390 124 495 20" },
             { label: "빨강 내야에서 재개", sound: "whistle", owner: "red-in", players: [[550,252,"red"]], ball: [550,230.75] }
           ] },
         { name: "내야수에 닿고 밖으로", result: "파랑 내야 공 · 빨강 내야수 아웃",
@@ -66,8 +66,8 @@
           detail: "공이 외야 바깥 경계를 넘지 않았어요. 파랑 외야 구역 안에 공이 있으므로 파랑 외야수가 공을 가지고 그대로 경기를 진행하면 돼요.",
           frames: [
             { label: "파랑 내야에서 공을 던져요", players: [[251,208,"blue"],[753,213,"blue"]], ball: [272.25,208] },
-            { label: "공이 파랑 외야 안에 떨어져요", sound: "throw", contact: "impact", players: [[251,208,"blue"],[753,213,"blue"]], path: "M272.25 208Q506 102 744 255" },
-            { label: "파랑 외야가 공을 잡아요", sound: "catch", owner: "blue-out", players: [[753,238,"blue"]], ball: [731.75,238] }
+            { label: "공이 파랑 외야 안에 떨어져요", sound: "release", contact: "ball-land", players: [[251,208,"blue"],[753,213,"blue"]], path: "M272.25 208Q506 102 744 255" },
+            { label: "파랑 외야가 공을 잡아요", sound: "ball-contact", owner: "blue-out", players: [[753,238,"blue"]], ball: [731.75,238] }
           ] }
       ]
     },
@@ -78,32 +78,32 @@
         { name: "몸에 바로 맞음", result: "빨강 내야수 아웃",
           detail: "상대의 정상적인 공격이 바닥에 닿기 전에 몸에 맞고 떨어지면 아웃이에요. 맞은 선수는 자기 팀 외야로 이동해요.",
           frames: [
-            { label: "파랑이 빨강 내야를 공격", sound: "throw", contact: "impact", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q406 146 564 216" },
+            { label: "파랑이 빨강 내야를 공격", sound: "release", contact: "ball-contact", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q406 146 564 216" },
             { label: "빨강 내야수 아웃", players: [[252,213,"blue"],[564,216,"red"]], path: "M564 216L579 257", mark: [564,216] }
           ] },
         { name: "바닥에 먼저 닿음", result: "빨강 내야수 세이프",
           detail: "공이 바닥에 먼저 닿고 몸에 맞았으므로 내야에 남아요.",
           frames: [
-            { label: "공이 바닥에 먼저 닿아요", sound: "throw", contact: "impact", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q377 177 495 255", mark: [495,255] },
-            { label: "튀어 오른 공에 맞아도 세이프", contact: "impact", players: [[252,213,"blue"],[564,216,"red"]], path: "M495 255Q529 196 564 216" }
+            { label: "공이 바닥에 먼저 닿아요", sound: "release", contact: "ball-land", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q377 177 495 255", mark: [495,255] },
+            { label: "튀어 오른 공에 맞아도 세이프", contact: "ball-contact", players: [[252,213,"blue"],[564,216,"red"]], path: "M495 255Q529 196 564 216" }
           ] },
         { name: "공중에서 바로 잡음", result: "빨강팀 공격권",
           detail: "상대의 공을 바닥에 닿기 전에 바로 잡으면 아웃 없이 잡은 팀의 공격으로 바뀌어요.",
           frames: [
-            { label: "파랑팀 공격", sound: "throw", contact: "catch", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q412 148 542.75 216" },
+            { label: "파랑팀 공격", sound: "release", contact: "ball-contact", players: [[252,213,"blue"],[564,216,"red"]], path: "M273.25 213Q412 148 542.75 216" },
             { label: "빨강이 두 손으로 잡아요", owner: "red-in", players: [[252,213,"blue"],[564,216,"red"]], ball: [542.75,216] }
           ] },
         { name: "머리·얼굴에 맞음", result: "헤드어택 · 빨강 내야 공",
           detail: "이 장면처럼 상대의 얼굴 높이를 직접 공격하면 반칙이에요. 맞은 선수는 내야에 남고 수비하던 빨강팀이 공을 받아 재개해요.",
           frames: [
-            { label: "공이 얼굴 높이로 날아와요", sound: "throw", contact: "impact", players: [[252,213,"blue"],[564,216,"red"]], path: "M270.18 202Q399 159 564 197", mark: [564,197] },
+            { label: "공이 얼굴 높이로 날아와요", sound: "release", contact: "ball-contact", players: [[252,213,"blue"],[564,216,"red"]], path: "M270.18 202Q399 159 564 197", mark: [564,197] },
             { label: "빨강 내야 공", sound: "whistle", owner: "red-in", players: [[564,216,"red"]], ball: [564,194.75] }
           ] },
         { name: "두 명이 연달아 맞음", result: "공이 그대로 떨어지면 맞은 두 선수 아웃",
           detail: "바닥에 닿기 전에 빨강 내야수 두 명이 연달아 맞고 공이 떨어졌어요. 공중에서 다른 선수가 잡는 등 접촉이 이어지는 경우에는 주심 판정을 확인해요.",
           frames: [
-            { label: "첫 번째 내야수가 맞아요", sound: "throw", contact: "impact", players: [[252,213,"blue"],[514,196,"red"],[624,228,"red"]], path: "M273.25 213Q398 141 514 196" },
-            { label: "두 번째 내야수에게도 닿고 떨어져요", contact: "impact", players: [[252,213,"blue"],[514,196,"red"],[624,228,"red"]], path: "M514 196L624 228L650 267", mark: [624,228] }
+            { label: "첫 번째 내야수가 맞아요", sound: "release", contact: "ball-contact", players: [[252,213,"blue"],[514,196,"red"],[624,228,"red"]], path: "M273.25 213Q398 141 514 196" },
+            { label: "두 번째 내야수에게도 닿고 떨어져요", contact: "ball-contact", players: [[252,213,"blue"],[514,196,"red"],[624,228,"red"]], path: "M514 196L624 228L650 267", mark: [624,228] }
           ] }
       ]
     },
@@ -114,15 +114,15 @@
         { name: "패스 3번 뒤 공격", result: "네 번째는 상대 내야를 공격",
           detail: "공격권을 가진 동안 패스는 세 번까지예요. 네 번째 던지기도 같은 팀에게 보내면 포 패스 반칙이에요.",
           frames: [
-            { label: "1회 · 파랑 내야 → 파랑 외야", sound: "throw", contact: "catch", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M266.25 226Q485 107 728.75 194" },
-            { label: "2회 · 파랑 외야 → 파랑 내야", sound: "throw", contact: "catch", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M728.75 194Q485 107 266.25 226" },
-            { label: "3회 · 파랑 내야 → 파랑 외야", sound: "throw", contact: "catch", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M266.25 226Q485 107 728.75 194" },
-            { label: "4번째 던지기 · 빨강 내야 공격", sound: "throw", contact: "impact", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M728.75 194Q663 185 567 227" }
+            { label: "1회 · 파랑 내야 → 파랑 외야", sound: "release", contact: "ball-contact", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M266.25 226Q485 107 728.75 194" },
+            { label: "2회 · 파랑 외야 → 파랑 내야", sound: "release", contact: "ball-contact", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M728.75 194Q485 107 266.25 226" },
+            { label: "3회 · 파랑 내야 → 파랑 외야", sound: "release", contact: "ball-contact", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M266.25 226Q485 107 728.75 194" },
+            { label: "4번째 던지기 · 빨강 내야 공격", sound: "release", contact: "ball-contact", players: [[245,226,"blue"],[750,194,"blue"],[567,227,"red"]], path: "M728.75 194Q663 185 567 227" }
           ] },
         { name: "같은 구역끼리 패스", result: "더블 패스 · 상대 내야 공",
           detail: "내야수끼리 또는 외야수끼리 패스하면 반칙이에요. 이 장면에서는 파랑 내야끼리 주고받았으므로 빨강 내야에서 재개해요.",
           frames: [
-            { label: "파랑 내야수가 같은 내야수에게 패스", sound: "throw", contact: "catch", players: [[212,223,"blue"],[340,172,"blue"],[555,219,"red"]], path: "M233.25 223Q264 151 318.75 172" },
+            { label: "파랑 내야수가 같은 내야수에게 패스", sound: "release", contact: "ball-contact", players: [[212,223,"blue"],[340,172,"blue"],[555,219,"red"]], path: "M233.25 223Q264 151 318.75 172" },
             { label: "빨강 내야에서 재개", sound: "whistle", owner: "red-in", players: [[555,219,"red"]], ball: [555,197.75] }
           ] },
         { name: "5초를 넘김", result: "5초 룰 · 상대 내야 공",
@@ -138,7 +138,7 @@
         { name: "선을 밟고 던짐", result: "오버라인 · 맞아도 세이프",
           detail: "공격자가 자기 구역 선을 밟거나 넘어 던지면 반칙이에요. 맞은 선수는 내야에 남고 상대 내야에서 재개해요. 수비 내야수가 두 발 모두 자기 내야 밖으로 나가면 아웃이에요.",
           frames: [
-            { label: "파랑 공격자의 발이 중앙선에 닿아요", sound: "throw", contact: "whistle", players: [[414,219,"blue"],[575,225,"red"]], path: "M435.25 219Q492 153 575 225", mark: [420,219] },
+            { label: "파랑 공격자의 발이 중앙선에 닿아요", sound: "release", contact: "whistle", players: [[414,219,"blue"],[575,225,"red"]], path: "M435.25 219Q492 153 575 225", mark: [420,219] },
             { label: "빨강 내야에서 재개", sound: "whistle", owner: "red-in", players: [[575,225,"red"]], ball: [575,203.75] }
           ] },
         { name: "상대 바닥의 공을 가져감", result: "홀딩 · 상대 내야 공",
@@ -183,7 +183,7 @@
   };
 
   const get = id => document.getElementById("dodgeball-" + id);
-  const sound = setupLessonSound(get("sound"), get("whistle"));
+  const sound = lessonSound;
   const nav = get("nav");
   const choices = get("cases");
   const visual = get("visual");
@@ -244,7 +244,7 @@
   ];
   const earlySteps = [
     restartSteps[0],
-    ["휘슬 전 투구", "신호가 울리기 전에 던졌어요.", "throw"],
+    ["휘슬 전 투구", "신호가 울리기 전에 던졌어요.", "release"],
     ["재개 동작 파울", "상대 내야에 공을 줘요.", "whistle"]
   ];
   let topic = "court";
@@ -318,7 +318,7 @@
       const [x, y] = frame.ball;
       const { from, shoulder } = frame.reach;
       const reached = (from - shoulder - 9) / (x - shoulder - 9);
-      const timing = { duration: 780, easing: "ease-in-out" };
+      const timing = { duration: demonstrationDuration(780), easing: "ease-in-out" };
       visual.querySelector(".dodgeball-reaching-arm").animate([
         { transform: "scaleX(0)" },
         { transform: `scaleX(${reached})`, offset: .55 },
@@ -339,7 +339,7 @@
     if (animate) {
       sound.play(reducedMotion.matches ? frame.contact ?? frame.sound : frame.sound);
       if (frame.contact && !reducedMotion.matches) {
-        contactTimer = setTimeout(() => sound.play(frame.contact), 740);
+        contactTimer = setTimeout(() => sound.play(frame.contact), demonstrationDuration(740));
       }
     }
     if (animate && !reducedMotion.matches) {
@@ -347,7 +347,7 @@
         const point = path.getPointAtLength(length * index / 20);
         return { transform: `translate(${point.x}px,${point.y}px)` };
       });
-      dot.animate(keyframes, { duration: 740, easing: "ease-in-out" });
+      dot.animate(keyframes, { duration: demonstrationDuration(740), easing: "ease-in-out" });
     }
   }
 
@@ -382,11 +382,12 @@
     const outAt = reboundAt + 300;
     const restartAt = outAt + 550;
     const start = performance.now();
+    const speed = preferences.speed;
     let impactPlayed = false;
-    sound.play("throw");
+    sound.play("release");
 
     function tick(now) {
-      const elapsed = Math.max(0, now - start);
+      const elapsed = Math.max(0, now - start) * speed;
       if (elapsed >= restartAt) {
         draw(1, true);
         return;
@@ -398,7 +399,7 @@
       ball.setAttribute("transform", `translate(${point.x} ${point.y})`);
       if (elapsed >= hitAt && !impactPlayed) {
         impactPlayed = true;
-        sound.play("impact");
+        sound.play("ball-contact");
       }
       const caption = elapsed >= reboundAt ? "스친 공이 외야 경계 밖으로 나가요"
         : elapsed >= hitAt ? "빨강 외야수에게 스쳐요"
@@ -428,16 +429,17 @@
     const tracePlayer = tracePath(walk, visual.querySelector(".dodgeball-walk-trail"));
     const traceRebound = tracePath(rebound, visual.querySelector(".dodgeball-rebound-trail"));
     const start = performance.now();
+    const speed = preferences.speed;
     let impactPlayed = false;
     let finishSoundPlayed = false;
-    if (!reducedMotion.matches) sound.play("throw");
+    if (!reducedMotion.matches) sound.play("release");
 
     function tick(now) {
-      const elapsed = reducedMotion.matches ? restartAt : Math.max(0, now - start);
+      const elapsed = reducedMotion.matches ? restartAt : Math.max(0, now - start) * speed;
       const hit = elapsed >= hitAt;
       if (hit && !impactPlayed) {
         impactPlayed = true;
-        sound.play("impact");
+        sound.play("ball-contact");
       }
       const flightPoint = traceBall(Math.min(1, elapsed / hitAt));
       const ballPoint = hit
@@ -594,7 +596,7 @@
     const total = frames?.length ?? restartSteps.length;
     function show(index) {
       draw(index, true);
-      if (index + 1 < total) playback = setTimeout(() => show(index + 1), frames?.[index].duration ?? 1250);
+      if (index + 1 < total) playback = setTimeout(() => show(index + 1), demonstrationDuration(frames?.[index].duration ?? 1250));
     }
     show(0);
   });

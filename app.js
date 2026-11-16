@@ -46,7 +46,7 @@ const families = [
   ]]
 ];
 
-const state = {page:"court", match:"single", case:0, odd:false, scoreStep:0, family:1, skill:0, progress:null, sound:false, yearMode: todayMode()};
+const state = {page:"court", match:"single", case:0, odd:false, scoreStep:0, family:1, skill:0, progress:null, yearMode: todayMode()};
 const $ = id => document.getElementById(id);
 const reduced = matchMedia("(prefers-reduced-motion: reduce)");
 const playIcon = '<svg viewBox="0 0 20 20" aria-hidden="true"><path fill="currentColor" d="M5 3l12 7-12 7z"/></svg>';
@@ -54,7 +54,6 @@ const firstContact = .20;
 const partnerContact = .64;
 const isDoubleHit = () => state.page === "faults" && state.case === 4 && isDouble();
 let frame = 0;
-let audio;
 
 function todayMode(){
   const date = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Seoul",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(new Date());
@@ -97,17 +96,6 @@ function reset(){
   cancelAnimationFrame(frame);
   state.progress=null;
   state.scoreStep=0;
-}
-function hit(){
-  if(!state.sound || !audio || audio.state!=="running")return;
-  const source=audio.createBufferSource(), gain=audio.createGain(), filter=audio.createBiquadFilter();
-  const sampleCount=Math.round(audio.sampleRate*.085);
-  const buffer=audio.createBuffer(1,sampleCount,audio.sampleRate);
-  const samples=buffer.getChannelData(0);
-  for(let i=0;i<sampleCount;i++) samples[i]=(Math.random()*2-1)*Math.exp(-i/(sampleCount*.16));
-  filter.type="bandpass";filter.frequency.value=1750;filter.Q.value=.75;
-  source.buffer=buffer;gain.gain.value=.34;
-  source.connect(filter).connect(gain).connect(audio.destination);source.start();
 }
 function scenario(){
   const [name,prompt,x,baseY,result,message,kind]=cases()[state.case];
@@ -152,7 +140,7 @@ function court({shot,serve=false,progress=null,fault=false}={}){
   const racket=(x,y,angle)=>`<g transform="translate(${x-2} ${y}) rotate(${angle})" stroke="#f5f6d8" stroke-width="2.5" fill="none"><path d="M-13 8-5 3"/><ellipse rx="8" ry="5" transform="rotate(-25)"/><path d="M-5 0H5M0-4V4" stroke-width="1"/></g>`;
   const secondSwing=partnerSwing&&phase<partnerContact+.14?44*Math.sin((phase-partnerContact)/.14*Math.PI):0;
   const hits=doubleHit&&phase>=firstContact?`<g fill="#ffe4ad" font-size="14" font-weight="800"><text x="${strikeX-2}" y="${strikeY+24}">① A</text>${partnerSwing?`<text x="${contactX+10}" y="${contactY+24}">② A′</text>`:""}</g>`:"";
-  const svg=`<svg viewBox="0 0 640 400" role="img" aria-label="${matchName()} 코트, ${serve?"대각선 서브 구역":"랠리 경계"}"><rect x="66" y="36" width="508" height="328" rx="19" fill="#21463a"/><rect x="90" y="54" width="460" height="292" rx="2" fill="#306b54"/><rect x="90" y="54" width="230" height="292" fill="#ffffff06"/><g fill="none" stroke="#d4e8d4" stroke-width="1.7" opacity=".64"><rect x="90" y="54" width="460" height="292"/><path d="M90 76H550M90 324H550M116 54V346M524 54V346M254 54V346M386 54V346M90 200H254M386 200H550"/></g><rect x="90" y="${top}" width="460" height="${bottom-top}" fill="none" stroke="#d9f398" stroke-width="3"/>${target}<path d="M320 43V357" stroke="#c5ddd2" stroke-width="3"/><circle cx="320" cy="43" r="4" fill="#c5ddd2"/><circle cx="320" cy="357" r="4" fill="#c5ddd2"/><g fill="#cfdfd7" font-size="15" font-weight="700" text-anchor="middle"><text x="194" y="25">${serve?"서브하는 쪽":"우리 쪽"}</text><text x="446" y="25">${serve?"받는 쪽":"상대 쪽"}</text></g>${player(serve?226:163,startY,"A")}${player(433,serve?(odd?255:145):164,"B")}${double?player(partnerX,serve?(odd?248:142):partnerY,"A′",true)+player(482,serve?(odd?143:256):263,"B′",true):""}${racket(strikeX,strikeY,swingAngle)}${doubleHit?racket(partnerX+24,partnerY+12,secondSwing):""}${partnerFlight}${path}${hits}${netContact}${landing}</svg>`;
+  const svg=`<svg viewBox="60 6 520 366" role="img" aria-label="${matchName()} 코트, ${serve?"대각선 서브 구역":"랠리 경계"}"><rect x="66" y="36" width="508" height="328" rx="19" fill="#21463a"/><rect x="90" y="54" width="460" height="292" rx="2" fill="#306b54"/><rect x="90" y="54" width="230" height="292" fill="#ffffff06"/><g fill="none" stroke="#d4e8d4" stroke-width="1.7" opacity=".64"><rect x="90" y="54" width="460" height="292"/><path d="M90 76H550M90 324H550M116 54V346M524 54V346M254 54V346M386 54V346M90 200H254M386 200H550"/></g><rect x="90" y="${top}" width="460" height="${bottom-top}" fill="none" stroke="#d9f398" stroke-width="3"/>${target}<path d="M320 43V357" stroke="#c5ddd2" stroke-width="3"/><circle cx="320" cy="43" r="4" fill="#c5ddd2"/><circle cx="320" cy="357" r="4" fill="#c5ddd2"/><g fill="#cfdfd7" font-size="15" font-weight="700" text-anchor="middle"><text x="194" y="25">${serve?"서브하는 쪽":"우리 쪽"}</text><text x="446" y="25">${serve?"받는 쪽":"상대 쪽"}</text></g>${player(serve?226:163,startY,"A")}${player(433,serve?(odd?255:145):164,"B")}${double?player(partnerX,serve?(odd?248:142):partnerY,"A′",true)+player(482,serve?(odd?143:256):263,"B′",true):""}${racket(strikeX,strikeY,swingAngle)}${doubleHit?racket(partnerX+24,partnerY+12,secondSwing):""}${partnerFlight}${path}${hits}${netContact}${landing}</svg>`;
   return svg;
 }
 function placeShuttle(progress){
@@ -183,13 +171,13 @@ function skillVideo(){
   const item=technique();
   const clip=item.clip;
   if(clip){
-    return `<video class="skill-film" id="skill-film" controls playsinline preload="metadata"${state.sound?"":" muted"} src="${clip}" aria-label="오른손잡이 ${item.name} AI 시범"></video>`;
+    return `<video class="skill-film" id="skill-film" controls playsinline preload="metadata"${lessonSound.enabled?"":" muted"} src="${clip}" aria-label="오른손잡이 ${item.name} AI 시범"></video>`;
   }
   return `<div class="film-cover"><div class="film-cover-icon">${playIcon}</div><div><p>${item.source ?? "Badminton Insight"} 실사 시범</p><h2>${item.name}</h2></div>${button("실사 시범 재생","watch","",undefined,"primary film-play")}</div>`;
 }
 function watchSource(){
   const item=technique();
-  $("visual").innerHTML=`<iframe class="skill-film" title="${item.name} 공개 시범" src="https://www.youtube-nocookie.com/embed/${item.youtube}?autoplay=1&mute=${state.sound?0:1}&rel=0&start=${item.start ?? 0}" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  $("visual").innerHTML=`<iframe class="skill-film" title="${item.name} 공개 시범" src="https://www.youtube-nocookie.com/embed/${item.youtube}?autoplay=1&mute=${lessonSound.enabled?0:1}&rel=0&start=${item.start ?? 0}" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
 }
 function renderInsight(){
   const container=$("insight");
@@ -224,7 +212,6 @@ function render(){
   const index=Object.keys(pages).indexOf(state.page)+1;
   $("nav").innerHTML=Object.entries(pages).map(([key,value],i)=>`<a href="#${key}"${key===state.page?' aria-current="page"':""}><span>0${i+1}</span>${value.label}</a>`).join("");
   $("match").innerHTML=segments([["single","단식"],["double","복식"]],"match");
-  renderSoundButton($("sound"),state.sound);
   $("demo-index").textContent="0"+index+" / "+page.visual;
   $("demo-note").textContent=state.page==="score"?state.yearMode+"점제":state.page==="skills"?"오른손잡이 기준":matchName();
   $("lesson").dataset.page=state.page;
@@ -238,7 +225,6 @@ function render(){
       optionGroup(name,items.map(({name},skill)=>[family+":"+skill,name]),"technique",state.family+":"+state.skill)
     ).join("");
     actions=`<a class="minor" href="https://www.youtube.com/watch?v=${item.youtube}${item.start?"&amp;t="+item.start+"s":""}" target="_blank" rel="noopener noreferrer">유튜브 원본 ↗</a>`;
-    if(state.family===1)actions+='<a class="minor" href="#serve">서브 규칙 보기</a>';
   }else{
     const examples=cases().map(([label],i)=>[i,label]);
     if(state.page==="serve"){
@@ -264,37 +250,33 @@ function render(){
 }
 function play(){
   reset();
+  const landsOnFloor = state.page !== "faults" || state.case !== 3;
   if(reduced.matches){
+    if (landsOnFloor) lessonSound.play("shuttle-land");
     state.progress=1;
     render();
     return;
   }
   const started=performance.now();
   const doubleHit=isDoubleHit();
-  const duration=doubleHit?3200:2100;
+  const duration = demonstrationDuration(doubleHit ? 3200 : demonstrationBaseDuration);
   let strikes=0;
   render();
   function tick(now){
     state.progress=Math.min(1,(now-started)/duration);
-    if(state.progress>=firstContact&&!strikes){hit();strikes++;}
-    if(doubleHit&&state.progress>=partnerContact&&strikes===1){hit();strikes++;}
-    if(state.progress===1){render();return;}
+    if(state.progress>=firstContact&&!strikes){lessonSound.play("shuttle-hit");strikes++;}
+    if(doubleHit&&state.progress>=partnerContact&&strikes===1){lessonSound.play("shuttle-hit");strikes++;}
+    if(state.progress===1){
+      if (landsOnFloor) lessonSound.play("shuttle-land");
+      render();
+      return;
+    }
     renderVisual();
     frame=requestAnimationFrame(tick);
   }
   frame=requestAnimationFrame(tick);
 }
 document.addEventListener("click",event=>{
-  if(event.target.closest("#sound")){
-    state.sound=!state.sound;
-    if(state.sound&&window.AudioContext){
-      audio??=new AudioContext();
-      audio.resume().catch(()=>{});
-    }
-    renderSoundButton($("sound"),state.sound);
-    if($("skill-film"))$("skill-film").muted=!state.sound;
-    return;
-  }
   const control=event.target.closest("[data-key]");
   if(!control)return;
   const {key,value}=control.dataset;

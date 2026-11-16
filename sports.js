@@ -2,68 +2,73 @@
 
 const captionGuide = '<span class="caption-guide"><strong>한국어 자막</strong> 영상 톱니바퀴(⚙) → 자막 → 자동 번역 → 아래로 내려 ‘한국어’ 선택 <small>· 자막이 있는 영상에서 가능</small></span>';
 
-function renderSoundButton(button, enabled) {
-  const symbol = enabled
+const audioButton = document.querySelector("#app-sound");
+const whistle = document.querySelector("#dodgeball-whistle");
+const sampleNames = ["shuttle-hit", "shuttle-land", "ball-land", "ball-contact", "disc-land", "disc-catch", "release"];
+const lessonSamples = new Map(sampleNames.map(name => {
+  const player = new Audio(`./sfx-${name}.wav?v=landing-balance-2`);
+  player.preload = "auto";
+  return [name, player];
+}));
+const whistleScale = .6;
+let testPlayer;
+
+function stopLessonSounds() {
+  whistle.pause();
+  for (const player of lessonSamples.values()) player.pause();
+}
+
+function updateLessonVolume() {
+  const volume = preferences.volume / 100;
+  whistle.volume = volume * whistleScale;
+  for (const player of lessonSamples.values()) player.volume = volume;
+  if (!preferences.sound || !volume) stopLessonSounds();
+}
+
+function renderSoundButton() {
+  const symbol = preferences.sound
     ? '<path d="M16 9a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10"/>'
     : '<path d="m16 10 5 5m0-5-5 5"/>';
-  button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/>' + symbol + '</svg>' +
-    (enabled ? "소리 켜짐" : "소리 꺼짐");
-  button.setAttribute("aria-pressed", enabled);
+  audioButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3z"/>' + symbol + '</svg>';
+  audioButton.setAttribute("aria-pressed", String(preferences.sound));
+  audioButton.title = preferences.sound ? "전체 효과음 끄기" : "전체 효과음 켜기";
 }
 
-let lessonAudio;
-const lessonCues = {
-  throw: ["triangle", 530, 185, .12, .085],
-  catch: ["sine", 440, 165, .10, .17],
-  impact: ["triangle", 235, 62, .13, .25],
-  point: ["sine", 520, 820, .20, .16],
-  notice: ["sine", 400, 265, .14, .14]
+function playSample(player, volume) {
+  if (!player || !volume) return;
+  player.volume = volume;
+  player.currentTime = 0;
+  player.play().catch(() => {});
+}
+
+const lessonSound = {
+  get enabled() { return preferences.sound; },
+  play(cue) {
+    if (!this.enabled) return;
+    const volume = preferences.volume / 100;
+    if (cue === "whistle") playSample(whistle, volume * whistleScale);
+    else playSample(lessonSamples.get(cue), volume);
+  }
 };
 
-function setupLessonSound(button, whistle) {
-  let enabled = false;
-  let output;
-  renderSoundButton(button, enabled);
-  button.addEventListener("click", () => {
-    enabled = !enabled;
-    renderSoundButton(button, enabled);
-    if (enabled && window.AudioContext) {
-      lessonAudio ??= new AudioContext();
-      if (!output) {
-        output = lessonAudio.createGain();
-        output.connect(lessonAudio.destination);
-      }
-      lessonAudio.resume().catch(() => {});
-    }
-    if (output) output.gain.value = Number(enabled);
-    if (!enabled && whistle) whistle.pause();
-  });
-  return {
-    get enabled() { return enabled; },
-    play(cue) {
-      if (!cue || !enabled || button.closest("[hidden]")) return;
-      if (cue === "whistle" && whistle) {
-        whistle.currentTime = 0;
-        whistle.play().catch(() => {});
-        return;
-      }
-      if (lessonAudio?.state !== "running" || !Object.hasOwn(lessonCues, cue)) return;
-      const [type, initial, final, duration, volume] = lessonCues[cue];
-      const oscillator = lessonAudio.createOscillator();
-      const gain = lessonAudio.createGain();
-      const now = lessonAudio.currentTime;
-      oscillator.type = type;
-      oscillator.frequency.setValueAtTime(initial, now);
-      oscillator.frequency.exponentialRampToValueAtTime(final, now + duration);
-      gain.gain.setValueAtTime(.001, now);
-      gain.gain.exponentialRampToValueAtTime(volume, now + .015);
-      gain.gain.exponentialRampToValueAtTime(.001, now + duration);
-      oscillator.connect(gain).connect(output);
-      oscillator.start(now);
-      oscillator.stop(now + duration);
-    }
-  };
+function testWhistleSound(volume) {
+  stopSoundTest();
+  testPlayer = new Audio(whistle.src);
+  playSample(testPlayer, volume / 100 * whistleScale);
 }
+
+function stopSoundTest() {
+  testPlayer?.pause();
+  testPlayer = undefined;
+}
+
+audioButton.addEventListener("click", () => savePreferences({ sound: !preferences.sound }));
+document.addEventListener("preferenceschange", () => {
+  renderSoundButton();
+  updateLessonVolume();
+});
+addEventListener("hashchange", stopLessonSounds);
+renderSoundButton();
 
 function renderNotes(container, notes, selected) {
   container.replaceChildren(...notes.map(([label, text], index) => {
@@ -106,3 +111,4 @@ function selectSport() {
 
 addEventListener("hashchange", selectSport);
 selectSport();
+

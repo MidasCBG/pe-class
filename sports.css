@@ -18,6 +18,8 @@
 .sport-pick.disc{background:#f5e7d7;color:#733b19}
 .sport-pick[aria-current=true],.sport-pick:hover{border-color:currentColor}
 .sport-pick.racket[aria-current=true]{background:#21543e;color:#fff}
+.sport-pick.racket:hover{background:#c2e2c5;border-color:#2f7251}
+.sport-pick.racket[aria-current=true]:hover{background:#2a6248;border-color:#d7f18d}
 .sport-pick.disc[aria-current=true]{background:#8c4b24;color:#fff}
 .sport-panel{grid-area:1/2/3/3;width:100%;padding-inline:clamp(14px,2.3vw,38px)}
 .sport-panel[hidden]{display:none}

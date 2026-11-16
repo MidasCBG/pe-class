@@ -15,7 +15,7 @@
       tab:"패스와 이동", title:"디스크를 잡으면 어떻게 움직일까요?", lead:"한 발을 고정하고 빈 공간으로 움직이는 팀원에게 던져요.",
       cases:[
         {name:"피벗과 패스", prompt:"지수의 고정 발과 빈 곳으로 움직이는 수아를 보세요.", result:"공격 계속", detail:"디스크를 잡으면 멈춰요. 한 발을 고정하고 다른 발로 방향을 바꾼 뒤 공중으로 패스해요. 손에서 손으로 건네면 안 돼요.", path:"M289 242 Q443 105 595 190", players:[[270,252,"지수","blue"],[600,192,"수아","blue",495,298],[329,283,"민준","red"]], pivot:[270,252]},
-        {name:"스톨 카운트", prompt:"가까운 수비가 세는 동안 언제 패스해야 할까요?", result:"10을 말하기 전에 패스", detail:"던지는 사람을 맡은 수비가 3 m 안에서 소리 내어 세요. ‘10’을 말하기 시작하기 전에 디스크를 놓아야 해요.", path:"M289 240 Q450 125 620 170", players:[[270,250,"지수","blue"],[625,170,"수아","blue"],[308,279,"민준","red"]], count:8},
+        {name:"스톨 카운트", prompt:"민준이가 숫자를 세고 있어요. 지수는 언제 패스할까요?", result:"8에서 패스 · 공격 계속", detail:"던지는 사람을 맡은 수비가 3 m 안에서 소리 내어 세요. ‘10’을 말하기 시작하기 전에 디스크를 놓아야 해요.", path:"M289 240 Q450 125 620 170", players:[[270,250,"지수","blue"],[625,170,"수아","blue"],[308,279,"민준","red"]], count:8, counter:"민준"},
         {name:"트래블", prompt:"디스크를 잡은 지수의 두 발을 살펴보세요.", result:"트래블 · 피벗 위치 바로잡기", detail:"디스크를 든 채 달리거나 피벗 발을 옮기면 트래블이에요. 정식 규칙에서는 보통 올바른 피벗 위치로 돌아와 계속해요.", path:"M300 250 L435 250", players:[[420,258,"지수","blue",285,258]], pivot:[285,258]}
       ]
     },
@@ -32,7 +32,7 @@
       cases:[
         {name:"드롭", prompt:"받는 선수가 디스크를 놓치면 어떻게 될까요?", result:"턴오버 · 빨강팀 공격", detail:"땅에 닿으면 공격권이 바뀌어요. 수비가 쳐내도 공격팀이 땅에 닿기 전에 잡으면 계속해요.", path:"M318 240 Q500 90 663 286", players:[[300,246,"지수","blue"],[640,223,"수아","blue"]]},
         {name:"인터셉트", prompt:"공중에 뜬 디스크를 누가 먼저 잡을까요?", result:"턴오버 · 빨강팀 공격", detail:"수비가 패스를 잡으면 잡은 선수가 새 공격을 시작해요. 공격과 수비가 동시에 잡으면 공격팀이 계속해요.", path:"M318 238 Q432 110 568 205", players:[[300,246,"지수","blue"],[676,211,"수아","blue"],[571,205,"민준","red",617,286]]},
-        {name:"스톨 아웃", prompt:"디스크를 든 채 수비가 ‘10’을 말하면 어떻게 될까요?", result:"턴오버 · 빨강팀 공격", detail:"수비가 ‘10’을 말하기 시작할 때까지 디스크가 손에 남아 있으면 공격권이 바뀌어요.", players:[[424,241,"지수","blue"],[468,264,"민준","red"]], disc:[443,232], count:10},
+        {name:"스톨 아웃", prompt:"디스크를 든 채 수비가 ‘10’을 말하면 어떻게 될까요?", result:"턴오버 · 빨강팀 공격", detail:"수비가 ‘10’을 말하기 시작할 때까지 디스크가 손에 남아 있으면 공격권이 바뀌어요.", players:[[424,241,"지수","blue"],[468,264,"민준","red"]], disc:[443,232], count:10, counter:"민준"},
         {name:"필드 밖", prompt:"디스크가 사이드라인 안에 떨어지는지 보세요.", result:"턴오버 · 빨강팀 공격", detail:"일반 패스가 아웃되면 수비팀이 공격권을 얻어요. 재개 위치는 디스크가 경계선을 넘은 지점 등을 기준으로 정해요.", path:"M310 212 Q460 82 670 39", players:[[290,222,"지수","blue"],[676,112,"수아","blue"]]}
       ]
     },
@@ -62,7 +62,7 @@
   };
 
   const get = id => document.getElementById("ultimate-" + id);
-  const sound = setupLessonSound(get("sound"));
+  const sound = lessonSound;
   const tabs = Object.keys(lessons);
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let active = "field";
@@ -71,6 +71,12 @@
   const current = () => lessons[active].cases[example];
   const lesson = get("lesson");
   const visual = get("visual");
+  const stallBeat = 600;
+  const stallPassFlight = 850;
+  const sceneDuration = item => item.count
+    ? (item.count - 1) * stallBeat + (item.path ? stallPassFlight : stallBeat)
+    : demonstrationBaseDuration;
+  const releaseProgress = item => item.count ? (item.count - 1) * stallBeat / sceneDuration(item) : 0;
 
   function drawField(item, reveal) {
     const outline = "#e4eee4";
@@ -88,6 +94,10 @@
       `<g data-athlete="${i}" data-from-x="${fromX}" data-from-y="${fromY}" data-x="${x}" data-y="${y}" transform="translate(${fromX} ${fromY})">
         <circle r="15" fill="${team === "blue" ? "#3f81c5" : "#bc4f40"}" stroke="#fff" stroke-width="3"/>
         ${name ? label(0,39,name,22) : ""}
+        ${item.counter && name === item.counter ? `<g class="ultimate-count-bubble" visibility="hidden">
+          <path d="M43-23H81Q91-23 91-13V11Q91 21 81 21H43Q33 21 33 11V7L18 0L33-6V-13Q33-23 43-23Z" fill="#fff4e4" stroke="#a04435" stroke-width="2.5"/>
+          <text class="ultimate-count" x="62" y="8" fill="#742f24" font-size="28" font-weight="850" text-anchor="middle"></text>
+        </g>` : ""}
       </g>`).join("");
     const initial = item.disc || [0,0];
     return `<svg viewBox="0 0 1000 468" role="img" aria-label="얼티밋 경기장. 양쪽 끝에 득점존이 있습니다.">
@@ -103,7 +113,6 @@
       ${athletes}
       ${item.alert ? `<circle class="ultimate-alert" cx="${item.alert[0]}" cy="${item.alert[1]}" r="39" fill="none" stroke="#ffae6c" stroke-width="4" visibility="hidden"/>` : ""}
       ${item.path || item.disc ? `<ellipse class="ultimate-disc" cx="${initial[0]}" cy="${initial[1]}" rx="14" ry="8" fill="#ffe08e" stroke="#34281b" stroke-width="2"/>` : ""}
-      ${item.count ? '<text class="ultimate-count" x="500" y="150" fill="#ffe08e" font-size="32" font-weight="800" text-anchor="middle"></text>' : ""}
     </svg>`;
   }
 
@@ -140,7 +149,11 @@
       return;
     }
     get("actions").innerHTML = active === "field" ? "" : `<button type="button" class="primary" id="ultimate-play">${play} 보기</button>`;
-    get("caption").innerHTML = active === "field" ? "양쪽 득점존과 가운데 경기 구역" : '<span class="team-key blue">파랑팀</span><span class="team-key red">빨강팀</span><span class="team-key flying-disc">디스크</span>';
+    const caption = get("caption");
+    caption.innerHTML = active === "field" ? "양쪽 득점존과 가운데 경기 구역" : '<span class="team-key blue">파랑팀</span><span class="team-key red">빨강팀</span><span class="team-key flying-disc">디스크</span>';
+    if (item.count) {
+      caption.insertAdjacentHTML("beforeend", '<span class="caption-guide"><strong>실제 경기</strong> 숫자를 세는 시간은 최소 1초 간격으로 해요. 이 시범은 실제보다 빠르게 보여주고 있어요. <a href="https://rules.wfdf.sport/wp-content/uploads/2025/03/WFDF-Rules-of-Ultimate-2025-2028-Pocket-Format.pdf" target="_blank" rel="noopener noreferrer">WFDF 9.1 ↗</a></span>');
+    }
     visual.innerHTML = drawField(item, active === "field");
     move(0);
   }
@@ -158,7 +171,7 @@
     }
     if (path) {
       path.setAttribute("visibility", progress ? "visible" : "hidden");
-      const release = item.count ? (item.count - 1) / item.count : 0;
+      const release = releaseProgress(item);
       const flight = Math.max(0, (progress - release) / (1 - release));
       const point = path.getPointAtLength(path.getTotalLength() * flight);
       disc.setAttribute("cx", point.x);
@@ -166,16 +179,18 @@
     }
     if (alert) alert.setAttribute("visibility", progress >= .9 ? "visible" : "hidden");
     if (item.zone) endZone.setAttribute("fill", progress === 1 ? "#975f36" : "#586244");
-    if (count) count.textContent = progress ? `스톨 ${Math.min(item.count, 1 + Math.floor(progress * item.count))}` : "";
+    if (count) {
+      count.parentElement.setAttribute("visibility", progress ? "visible" : "hidden");
+      const value = String(Math.min(item.count, 1 + Math.floor(progress * sceneDuration(item) / stallBeat)));
+      if (count.textContent !== value) count.textContent = value;
+    }
   }
 
   function demonstrate() {
     cancelAnimationFrame(frame);
     const item = current();
-    const cue = item.name === "득점존 안 캐치" ? "point"
-      : item.name === "드롭" || item.name === "풀과 첫 패스" ? "impact"
-      : item.alert || item.name === "트래블" || item.name === "스톨 아웃" || item.name.includes("필드 밖") ? "notice"
-      : item.path && item.name !== "득점 뒤 전환" ? "catch" : null;
+    const cue = ["드롭", "풀과 첫 패스"].includes(item.name) || item.name.includes("필드 밖") ? "disc-land"
+      : item.path && !item.alert && !["트래블", "스톨 아웃", "득점 뒤 전환"].includes(item.name) ? "disc-catch" : null;
     const complete = () => {
       move(1);
       sound.play(cue);
@@ -189,14 +204,14 @@
     get("result").textContent = "시범 진행 중";
     updateNote();
     const start = performance.now();
-    const duration = item.count ? item.count * 1000 : 2100;
-    const release = item.count ? (item.count - 1) / item.count : 0;
+    const duration = demonstrationDuration(sceneDuration(item));
+    const release = releaseProgress(item);
     let released = false;
     function tick(now) {
       const progress = Math.min(1, (now - start)/duration);
       if (!released && item.path && item.name !== "트래블" && progress >= release) {
         released = true;
-        sound.play("throw");
+        sound.play("release");
       }
       if (progress === 1) complete();
       else {

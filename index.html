@@ -18,21 +18,28 @@
 <meta property="og:image:alt" content="체육 교실 제목 옆의 호루라기 아이콘">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://midascbg.github.io/pe-class/pe-whistle-share-v1.4.3.png">
-<link rel="stylesheet" href="./style.css?v=2.0.7">
-<link rel="stylesheet" href="./sports.css?v=rail-credit">
+<link rel="stylesheet" href="./style.css?v=v.2.2.8">
+<link rel="stylesheet" href="./sports.css?v=badminton-hover">
 <link rel="stylesheet" href="./dodgeball.css?v=2026-score-terms">
 <link rel="stylesheet" href="./teams-shell.css?v=rail-credit">
 <link rel="stylesheet" href="./landing.css?v=full-hero">
-<script defer src="./sports.js?v=2026-landing"></script>
-<script defer src="./app.js?v=2026-landing"></script>
+<link rel="stylesheet" href="./preferences.css?v=choice-buttons">
+<script defer src="./preferences.js?v=rail-side"></script>
+<script defer src="./sports.js?v=icon-tabs"></script>
+<script defer src="./app.js?v=skills-actions"></script>
 <script defer src="./landing.js?v=full-hero"></script>
-<script defer src="./ultimate.js?v=2026-sound"></script>
-<script defer src="./dodgeball.js?v=2026-score-tie"></script>
+<script defer src="./ultimate.js?v=stall-rule-copy"></script>
+<script defer src="./dodgeball.js?v=recorded-effects"></script>
 <script defer src="./teams-shell.js?v=2026-team-form-layout"></script>
 </head>
 <body>
 <div class="sports-layout">
-<aside class="sport-rail" aria-labelledby="sports-title">
+<div class="rail-edge" hidden>
+  <button type="button" class="rail-reveal" id="rail-reveal" aria-controls="sport-rail" aria-expanded="false" aria-label="왼쪽 메뉴 열기" title="왼쪽 메뉴 열기">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+  </button>
+</div>
+<aside class="sport-rail" id="sport-rail" aria-labelledby="sports-title">
   <a class="pe-brand" id="pick-home" href="#home" aria-label="체육 교실 홈" aria-current="page">
     <img class="pe-brand-icon" src="./pe-whistle.png" width="32" height="32" alt="">
     <div class="pe-brand-label"><strong id="sports-title">체육 교실</strong><span>PE CLASS</span></div>
@@ -49,7 +56,7 @@
     </a>
     <a class="sport-pick disc" id="pick-ultimate" href="#ultimate/field">
       <svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="22" cy="17" rx="14" ry="6" transform="rotate(-20 22 17)"/><path d="M10 22c3 6 22 1 26-6M4 26h7m-7 5h13"/></svg>
-      <span>플라잉디스크<br>얼티밋</span>
+      <span>플라잉디스크<br> 얼티밋</span>
     </a>
     <a class="sport-pick dodgeball-pick" id="pick-dodgeball" href="#dodgeball/court">
       <svg viewBox="0 0 40 40" aria-hidden="true">
@@ -64,8 +71,15 @@
   <nav class="team-navigation" aria-label="팀 및 대진 관리">
     <a class="sport-pick team-pick" id="pick-teams" href="#teams"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="12" r="5"/><circle cx="7" cy="18" r="4"/><circle cx="33" cy="18" r="4"/><path d="M11 33v-5a9 9 0 0 1 18 0v5M1 34v-5a6 6 0 0 1 9-5m20 0a6 6 0 0 1 9 5v5"/></svg><span>팀편성</span></a>
     <a class="sport-pick team-pick" id="pick-fixtures" href="#fixtures"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M5 7h7v10H5m0 6h7v10H5m7-21h9v16h-9m9-8h13"/></svg><span>대진편성</span></a>
+    <button type="button" class="sport-pick team-pick" id="open-preferences" aria-haspopup="dialog">
+      <svg viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M17 6h6l1 4 3 2 4-1 3 5-3 3v2l3 3-3 5-4-1-3 2-1 4h-6l-1-4-3-2-4 1-3-5 3-3v-2l-3-3 3-5 4 1 3-2z"/>
+        <circle cx="20" cy="20" r="5"/>
+      </svg>
+      <span>설정</span>
+    </button>
   </nav>
-  <footer class="sport-credit"><span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="site-version">v2.0.7</span></span></footer>
+  <footer class="sport-credit"><span class="credit"><img src="./giri.png" alt="" width="28" height="28"><span>기리공작소</span><span class="version" id="site-version">v.2.2.8</span></span></footer>
 </aside>
 <main class="sport-panel landing" id="home-panel" aria-labelledby="landing-title">
   <div class="landing-hero-copy">
@@ -81,7 +95,6 @@
       <span class="symbol" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="#shuttlecock-icon"/></svg></span>
       <span>배드민턴</span>
     </a>
-    <button id="sound" class="sound" type="button" aria-pressed="false"></button>
   </header>
   <nav id="nav" class="chapters" aria-label="학습 주제"></nav>
   <main class="lesson" id="lesson">
@@ -114,7 +127,6 @@
     <a class="brand" href="#ultimate/field"><span class="symbol" aria-hidden="true">
       <svg viewBox="0 0 40 40"><ellipse cx="21" cy="19" rx="14" ry="6" transform="rotate(-20 21 19)"/><path d="M9 24c3 6 22 1 26-6m-31 12h11"/></svg>
     </span>플라잉디스크 얼티밋</a>
-    <button id="ultimate-sound" class="sound" type="button" aria-pressed="false"></button>
   </header>
   <nav class="chapters" id="ultimate-nav" aria-label="얼티밋 학습 주제"></nav>
   <main class="lesson" id="ultimate-lesson">
@@ -145,7 +157,6 @@
     </span>피구</a>
     <div class="dodgeball-header-controls">
       <span class="dodgeball-division">초등부 스포츠피구</span>
-      <button id="dodgeball-sound" class="sound" type="button" aria-pressed="false"></button>
     </div>
   </header>
   <nav class="chapters" id="dodgeball-nav" aria-label="피구 학습 주제"></nav>
@@ -174,5 +185,98 @@
 </div>
 <section class="sport-panel team-host" id="teams-panel" aria-label="팀 및 대진 관리" hidden></section>
 </div>
+<button class="sound app-sound" id="app-sound" type="button" aria-label="전체 효과음" aria-pressed="false"></button>
+<dialog id="preferences" aria-labelledby="preferences-title">
+  <div class="preferences-sheet">
+    <header class="preferences-head">
+      <h2 id="preferences-title">수업 화면 설정</h2>
+      <button type="button" class="minor preference-icon" data-close-preferences aria-label="설정 닫기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="preference-tabs" role="tablist" aria-label="설정 항목">
+      <button type="button" role="tab" id="pref-tab-rail" class="preference-icon" aria-controls="pref-rail" aria-label="메뉴 표시">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M10 4v16M6 8h1m-1 4h1m-1 4h1"/></svg>
+      </button>
+      <button type="button" role="tab" id="pref-tab-layout" class="preference-icon" aria-controls="pref-layout" aria-label="조작 영역 위치">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M7 7h2m3 0h2m3 0h1"/></svg>
+      </button>
+      <button type="button" role="tab" id="pref-tab-speed" class="preference-icon" aria-controls="pref-speed" aria-label="시범 재생 속도">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a9 9 0 1 1 16 0H4Zm8-4 4-5"/><circle cx="12" cy="14" r="1"/></svg>
+      </button>
+      <button type="button" role="tab" id="pref-tab-text" class="preference-icon" aria-controls="pref-text" aria-label="학습 화면 글자 크기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 18 5-12 5 12M5 14h6m4 4 3-7 3 7m-5-2h4"/></svg>
+      </button>
+      <button type="button" role="tab" id="pref-tab-volume" class="preference-icon" aria-controls="pref-volume" aria-label="효과음 크기">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3zM16 9a4 4 0 0 1 0 6m2-8a7 7 0 0 1 0 10"/></svg>
+      </button>
+    </div>
+    <form id="preferences-form">
+      <section role="tabpanel" id="pref-rail" aria-labelledby="pref-tab-rail">
+        <div class="rail-options">
+          <fieldset><legend>메뉴 위치</legend>
+            <label><input type="radio" name="railSide" value="left"> 왼쪽</label>
+            <label><input type="radio" name="railSide" value="right"> 오른쪽</label>
+          </fieldset>
+          <fieldset><legend>표시 방식</legend>
+            <label><input type="radio" name="rail" value="fixed"> 고정</label>
+            <label><input type="radio" name="rail" value="compact"> 최소화</label>
+            <label><input type="radio" name="rail" value="hidden"> 숨기기</label>
+          </fieldset>
+        </div>
+        <div class="preference-preview rail-preview" data-mode="fixed" data-side="left">
+          <div class="rail-preview-frame">
+            <div class="rail-preview-edge">
+              <button type="button" class="rail-reveal rail-preview-trigger" aria-label="미리보기 메뉴 열기" aria-expanded="false" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+              </button>
+            </div>
+            <div class="rail-preview-menu" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="rail-preview-scene">경기 장면</div>
+          </div>
+        </div>
+        <p id="rail-preview-note"></p>
+      </section>
+      <section role="tabpanel" id="pref-layout" aria-labelledby="pref-tab-layout" hidden>
+        <fieldset><legend>조작 영역 위치</legend>
+          <label><input type="radio" name="layout" value="top"> 상단</label>
+          <label><input type="radio" name="layout" value="left"> 왼쪽</label>
+          <label><input type="radio" name="layout" value="right"> 오른쪽</label>
+        </fieldset>
+        <div class="preference-preview layout-preview" data-position="top">
+          <span>조작 영역</span><span>경기 장면</span>
+        </div>
+        <p>좁은 화면에서는 조작 영역을 상단에 표시합니다.</p>
+      </section>
+      <section role="tabpanel" id="pref-speed" aria-labelledby="pref-tab-speed" hidden>
+        <fieldset><legend>시범 재생 속도</legend>
+          <label><input type="radio" name="speed" value="0.5"> 0.5배</label>
+          <label><input type="radio" name="speed" value="0.75"> 0.75배</label>
+          <label><input type="radio" name="speed" value="1"> 보통</label>
+          <label><input type="radio" name="speed" value="1.25"> 1.25배</label>
+        </fieldset>
+        <div class="preference-preview speed-preview" aria-hidden="true"><span></span></div>
+        <button type="button" class="minor" id="preview-speed">이동 샘플 재생</button>
+      </section>
+      <section role="tabpanel" id="pref-text" aria-labelledby="pref-tab-text" hidden>
+        <fieldset><legend>학습 화면 글자 크기</legend>
+          <label><input type="radio" name="text" value="normal"> 기본</label>
+          <label><input type="radio" name="text" value="large"> 크게</label>
+        </fieldset>
+        <div class="preference-preview text-preview"><strong>어느 선을 볼까요?</strong><p>선 안에 떨어지면 어느 쪽이 이길까요?</p></div>
+      </section>
+      <section role="tabpanel" id="pref-volume" aria-labelledby="pref-tab-volume" hidden>
+        <label class="volume-label" for="preference-volume">효과음 크기 <output id="volume-value" for="preference-volume"></output></label>
+        <input type="range" name="volume" id="preference-volume" min="0" max="100" step="1">
+        <button type="button" class="minor" id="preview-whistle">샘플 듣기</button>
+      </section>
+      <footer class="preferences-actions">
+        <button type="submit" class="primary preference-icon" aria-label="설정 적용">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+        </button>
+      </footer>
+    </form>
+  </div>
+</dialog>
 </body>
 </html>
