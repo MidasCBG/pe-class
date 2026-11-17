@@ -19,8 +19,9 @@ const FixtureView = (() => {
     const integer = (value,min,max) => Number.isInteger(value) && value >= min && value <= max;
     if (state?.version !== 1 || typeof state.individual !== "boolean" ||
         !Array.isArray(state.teams) || !integer(state.teams.length,1,1000)) invalid();
+    if (state.targetSize !== undefined && !integer(state.targetSize,1,state.individual ? 1 : 1000)) invalid();
     for (const team of state.teams) {
-      if (!Array.isArray(team) || !integer(team.length,1,state.individual ? 1 : 1000)) invalid();
+      if (!Array.isArray(team) || !integer(team.length,0,state.individual ? 1 : 1000)) invalid();
       for (const student of team) {
         if (!student || typeof student.class !== "string" || !/^\d{1,2}$/.test(student.class) ||
           !integer(Number(student.class),1,99) || !integer(student.number,1,999) ||
@@ -99,14 +100,14 @@ const FixtureView = (() => {
     const groupMode = () => ["groups","split"].includes(setup());
     const manual = () => groupMode() && get("fixture-assignment").value === "manual";
     const groupsCount = () => setup() === "split" ? 2 : Number(get("fixture-group-count").value);
-    let individual = false;
+    let individual = false, targetSize = 1;
     const teamName = id => {
       if (!individual) return (id+1)+"팀";
       const student = teams[id][0];
-      return student.class+"반 "+student.number+"번 "+student.name;
+      return student ? student.class+"반 "+student.number+"번 "+student.name : (id+1)+"번 참가 자리 · 공석";
     };
     const memberNames = id => individual ? "" : teams[id].map(student => student.name).join(", ");
-    const entrantCount = () => teams.length+(individual ? "명" : "팀");
+    const entrantCount = () => individual ? teams.filter(team => team.length).length+"명" : teams.length+"팀";
     function matchSide(label, members) {
       const button = el("button","match-side");
       button.append(el("span","match-team-name",label));
@@ -127,7 +128,7 @@ const FixtureView = (() => {
     const board = rows.parentElement;
     function snapshot() {
       return {
-        version:1,teams,individual,schedule,picks:[...picks],leaguePicks:[...leaguePicks],
+        version:1,teams,individual,targetSize,schedule,picks:[...picks],leaguePicks:[...leaguePicks],
         resultSettings:{mode:resultMode.value,format:scoreFormat.value,setLimit:setLimit.value}
       };
     }
@@ -253,18 +254,18 @@ const FixtureView = (() => {
         });
         label.append(select);
         return label;
-      },individual,editParticipant) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
+      },individual,targetSize,editParticipant) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
     }
-    function editParticipant(teamIndex,memberIndex) {
+    function editParticipant(teamIndex,memberIndex,teamActions) {
       const current = teams;
-      const resetNeeded = replacement => Boolean(schedule && (individual || (!replacement && current[teamIndex].length === 1)));
+      const resetNeeded = next => Boolean(schedule && (individual || next.length !== current.length));
       memberEditor.open({
-        teams:current,teamIndex,memberIndex,roster:readTeams().roster,individual,
-        resetNotice:replacement => resetNeeded(replacement) ? "참가자가 바뀌어 현재 대진표와 경기 기록이 초기화됩니다." : "",
+        teams:current,teamIndex,memberIndex,teamActions,roster:readTeams().roster,individual,
+        resetNotice:next => resetNeeded(next) ? "참가자가 바뀌어 현재 대진표와 경기 기록이 초기화됩니다." : "",
         apply(next) {
           if (teams !== current) return;
           const removedTeam = next.length !== current.length;
-          const reset = Boolean(schedule && (individual || removedTeam));
+          const reset = resetNeeded(next);
           teams = next;
           if (removedTeam) assignments.splice(teamIndex,1);
           if (reset) resetSchedule();
@@ -275,7 +276,7 @@ const FixtureView = (() => {
       });
     }
     function clear() {
-      teams = []; individual = false; assignments = [];
+      teams = []; individual = false; targetSize = 1; assignments = [];
       get("parallel-games").value = "";
       for (const id of ["same-class","split-by-class","split-by-gender"]) setPressed(id,false);
       splitMessage("");
@@ -598,9 +599,15 @@ const FixtureView = (() => {
       const incoming = result.teams.map(team => team.map(({name,number,gender,class:className,duplicate}) => ({
         name,number,gender,class:className,...(duplicate ? {duplicate:true} : {})
       })));
-      if (individual === result.individual && JSON.stringify(teams) === JSON.stringify(incoming)) { status("현재 편성을 이미 가져왔습니다."); return; }
+      if (individual === result.individual && JSON.stringify(teams) === JSON.stringify(incoming)) {
+        if (targetSize === result.targetSize) { status("현재 편성을 이미 가져왔습니다."); return; }
+        targetSize = result.targetSize;
+        renderTeams(); persist();
+        return;
+      }
       teams = incoming; assignments = [];
       individual = result.individual;
+      targetSize = result.targetSize;
       splitMessage("");
       if (pressed("split-by-gender") && hasMixedGender()) {
         setPressed("split-by-gender",false);
@@ -672,6 +679,7 @@ const FixtureView = (() => {
       status("");
       try {
         if (teams.length < 2) throw new Error("대진을 만들려면 편성된 팀을 두 팀 이상 가져와 주세요.");
+        if (teams.some(team => !team.length)) throw new Error("새 대진표를 만들려면 공석에 학생을 추가해 주세요.");
         const input = get("parallel-games");
         if (!input.validity.valid) throw new Error("동시 진행 경기 수를 1~50 사이 정수로 입력하거나 비워 두세요.");
         const capacity = input.value === "" ? null : Number(input.value);
@@ -703,7 +711,8 @@ const FixtureView = (() => {
     function loadSnapshot(saved) {
         resetSchedule();
         teams = saved?.version === 1 && Array.isArray(saved.teams) ? saved.teams : [];
-        individual = saved?.individual === true && teams.every(team => team.length === 1);
+        individual = saved?.individual === true && teams.every(team => team.length <= 1);
+        targetSize = individual ? 1 : saved?.targetSize ?? Math.max(1,...teams.map(team => team.length));
         assignments = [];
         resultMode.value = saved?.resultSettings?.mode === "score" ? "score" : "winner";
         scoreFormat.value = saved?.resultSettings?.format === "sets" ? "sets" : "points";

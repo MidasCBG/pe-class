@@ -200,8 +200,12 @@ const TeamExcel = (() => {
       name:individual ? "참가자" : "참가팀",
       widths:[12,10,10,21,10,13],
       rows:[[individual ? "참가 번호" : "팀","반","번호","이름","성별","중복 배정"],
-        ...teams.flatMap((team,index) => team.map(student =>
-          [individual ? index+1 : (index+1)+"팀",Number(student.class),Number(student.number),student.name,student.gender,student.duplicate ? "중복" : ""]))]
+        ...teams.flatMap((team,index) => {
+          const group = individual ? index+1 : (index+1)+"팀";
+          return team.length ? team.map(student =>
+            [group,Number(student.class),Number(student.number),student.name,student.gender,student.duplicate ? "중복" : ""]) :
+            [[group,"","","공석"]];
+        })]
     };
   }
   const snapshotSheet = "대진 복원 데이터", snapshotMarker = "PE-CLASS-FIXTURES/1";

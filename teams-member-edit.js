@@ -13,14 +13,7 @@ const TeamMemberEdit = (() => {
     });
     return byStudent;
   }
-  function edit(teams,teamIndex,memberIndex,replacement) {
-    const next = teams.map((team,index) => {
-      if (index !== teamIndex) return team;
-      const members = [...team];
-      if (replacement) members[memberIndex] = replacement;
-      else members.splice(memberIndex,1);
-      return members;
-    }).filter(team => team.length);
+  function markDuplicates(next) {
     const placed = assignments(next);
     return next.map(team => team.map(student => {
       const {duplicate,...member} = student;
@@ -32,68 +25,121 @@ const TeamMemberEdit = (() => {
     const classSelect = get("member-edit-class"), studentSelect = get("member-edit-student");
     const studentField = get("member-edit-student-field"), confirm = get("member-edit-confirm");
     const note = get("member-edit-note"), change = get("member-edit-replace");
+    const swap = get("member-edit-swap"), emptyChoice = get("member-edit-empty-choice");
+    const teamChoice = get("team-edit-choice");
     let current;
-    function open({teams,teamIndex,memberIndex,roster,individual,resetNotice,apply}) {
+    const slotLabel = (index,individual) => (index+1)+(individual ? "번 참가 자리" : "팀");
+    function swapCandidates(teams,teamIndex,student) {
+      const own = new Set(teams[teamIndex].map(key));
+      return teams.flatMap((team,index) => index === teamIndex || team.some(member => key(member) === key(student)) ? [] :
+        team.flatMap((member,memberIndex) => own.has(key(member)) ? [] : [{student:member,teamIndex:index,memberIndex}]));
+    }
+    function open({teams,teamIndex,memberIndex,teamActions,roster,individual,resetNotice,apply}) {
       const team = teams[teamIndex], student = team[memberIndex];
       const sameTeam = new Set(team.map(key));
       const all = new Map([...roster,...teams.flat()].map(candidate => [key(candidate),candidate]));
-      const candidates = [...all.values()].filter(candidate => !sameTeam.has(key(candidate)));
-      current = {teams,teamIndex,memberIndex,candidates,individual,resetNotice,apply};
-      get("member-edit-title").textContent = label(student);
+      const candidates = [...all.values()].filter(candidate => !sameTeam.has(key(candidate))).map(student => ({student}));
+      const swaps = student ? swapCandidates(teams,teamIndex,student) : [];
+      current = {teams,teamIndex,memberIndex,candidates,swaps,individual,resetNotice,apply};
+      const teamLabel = slotLabel(teamIndex,individual);
+      get("member-edit-title").textContent = student ? label(student) : teamActions ? teamLabel+" 관리" : teamLabel+"에 학생 추가";
       note.textContent = "";
-      choice.hidden = false;
-      picker.hidden = confirm.hidden = true;
+      choice.hidden = !student;
+      teamChoice.hidden = !teamActions;
+      picker.hidden = confirm.hidden = emptyChoice.hidden = true;
       change.disabled = !candidates.length;
+      swap.disabled = !swaps.length;
       dialog.showModal();
+      if (!student && !teamActions) showPicker("추가",candidates);
     }
-    function commit(replacement) {
-      const {teams,teamIndex,memberIndex,apply} = current;
-      const next = edit(teams,teamIndex,memberIndex,replacement);
+    function commit(next) {
       dialog.close();
-      apply(next);
+      current.apply(markDuplicates(next));
     }
-    function review(replacement,teamNumbers = []) {
-      const notice = current.resetNotice?.(replacement);
-      if (!notice && !teamNumbers.length) {
-        commit(replacement);
+    function review(next,action,question = "") {
+      const notice = current.resetNotice?.(next);
+      if (!notice && !question) {
+        commit(next);
         return;
       }
-      const duplicate = teamNumbers.length ? label(replacement)+" 학생은 이미 "+teamNumbers.join(", ")+
-        "에 배정되어 있습니다. "+(current.individual ? "이 자리에도" : "이 팀에도")+" 중복 배정할까요?" : "";
-      note.textContent = [duplicate,notice].filter(Boolean).join(" ");
-      current.replacement = replacement;
-      choice.hidden = picker.hidden = true;
+      note.textContent = [question,notice].filter(Boolean).join(" ");
+      current.next = next;
+      choice.hidden = picker.hidden = emptyChoice.hidden = teamChoice.hidden = true;
       confirm.hidden = false;
-      confirm.textContent = teamNumbers.length ? "중복 배정" : replacement ? "교체 확인" : "삭제 확인";
+      confirm.textContent = action;
       get("member-edit-cancel").focus();
     }
-    get("member-edit-delete").addEventListener("click", () => review(null));
-    change.addEventListener("click", () => {
-      const classes = [...new Set(current.candidates.map(student => student.class))].sort((a,b) => Number(a)-Number(b));
+    function removeMember(removeTeam = false, question = "") {
+      const {teams,teamIndex,memberIndex} = current;
+      const next = teams.map(team => [...team]);
+      if (removeTeam) next.splice(teamIndex,1);
+      else next[teamIndex].splice(memberIndex,1);
+      review(next,removeTeam ? "팀 삭제 확인" : "삭제 확인",question);
+    }
+    get("member-edit-delete").addEventListener("click", () => {
+      if (current.teams[current.teamIndex].length > 1) {
+        removeMember();
+        return;
+      }
+      choice.hidden = true;
+      emptyChoice.hidden = false;
+      note.textContent = current.individual ? "마지막 학생입니다. 참가 자리를 지우거나 공석으로 남겨 나중에 학생을 추가할 수 있습니다." :
+        "팀의 마지막 학생입니다. 팀을 삭제하거나 공석으로 남겨 나중에 학생을 추가할 수 있습니다.";
+      get("member-edit-remove-team").textContent = current.individual ? "참가 자리 삭제" : "팀 삭제";
+      get("member-edit-keep-team").focus();
+    });
+    get("member-edit-remove-team").addEventListener("click", () => removeMember(true));
+    get("member-edit-keep-team").addEventListener("click", () => removeMember());
+    get("team-edit-add").addEventListener("click", () => showPicker("추가",current.candidates));
+    get("team-edit-delete").addEventListener("click", () =>
+      removeMember(true,slotLabel(current.teamIndex,current.individual)+"을 삭제할까요?"));
+    function showPicker(action,choices) {
+      current.action = action;
+      current.choices = choices;
+      const classes = [...new Set(choices.map(({student}) => student.class))].sort((a,b) => Number(a)-Number(b));
       classSelect.replaceChildren(new Option("반 선택",""),...classes.map(value => new Option(value+"반",value)));
       studentField.hidden = true;
       studentSelect.replaceChildren();
-      choice.hidden = true;
+      choice.hidden = teamChoice.hidden = true;
       picker.hidden = false;
+      note.textContent = choices.length ? "" : "추가할 수 있는 학생이 없습니다.";
+      get("member-edit-pick").textContent = action+"하기";
       get("member-edit-pick").disabled = true;
       classSelect.focus();
-    });
+    }
+    change.addEventListener("click", () => showPicker("교체",current.candidates));
+    swap.addEventListener("click", () => showPicker("맞교환",current.swaps));
     classSelect.addEventListener("change", () => {
-      const students = current.candidates.filter(student => student.class === classSelect.value)
-        .sort((a,b) => a.number-b.number);
+      const students = current.choices.map((candidate,index) => ({...candidate,index}))
+        .filter(({student}) => student.class === classSelect.value)
+        .sort((a,b) => a.student.number-b.student.number);
       studentSelect.replaceChildren(new Option("학생 선택",""),
-        ...students.map(student => new Option(student.number+"번 "+student.name,key(student))));
+        ...students.map(({student,teamIndex,index}) => new Option(student.number+"번 "+student.name+
+          (teamIndex === undefined ? "" : " · "+slotLabel(teamIndex,current.individual)),index)));
       studentField.hidden = !classSelect.value;
       get("member-edit-pick").disabled = true;
     });
     studentSelect.addEventListener("change", () => { get("member-edit-pick").disabled = !studentSelect.value; });
     get("member-edit-pick").addEventListener("click", () => {
-      const student = current.candidates.find(candidate => key(candidate) === studentSelect.value);
-      if (!student) return;
-      const occupied = assignments(current.teams).get(key(student)) ?? [];
-      review(student,[...occupied].map(index => current.individual ? (index+1)+"번 참가 자리" : (index+1)+"팀"));
+      if (studentSelect.value === "") return;
+      const {teams,teamIndex,memberIndex,individual,action,choices} = current;
+      const target = choices[Number(studentSelect.value)];
+      const next = teams.map(team => [...team]);
+      if (action === "맞교환") {
+        const otherTeam = next[target.teamIndex];
+        [next[teamIndex][memberIndex],otherTeam[target.memberIndex]] =
+          [otherTeam[target.memberIndex],next[teamIndex][memberIndex]];
+        review(next,"맞교환 확인");
+        return;
+      }
+      const {student} = target;
+      next[teamIndex].splice(memberIndex ?? next[teamIndex].length,action === "추가" ? 0 : 1,student);
+      const occupied = assignments(teams).get(key(student));
+      const question = occupied?.size ? label(student)+" 학생은 이미 "+[...occupied].map(index => slotLabel(index,individual)).join(", ")+
+        "에 배정되어 있습니다. "+(individual ? "이 자리에도" : "이 팀에도")+" 중복 배정할까요?" : "";
+      review(next,question ? "중복 배정" : action+" 확인",question);
     });
-    confirm.addEventListener("click", () => commit(current.replacement));
+    confirm.addEventListener("click", () => commit(current.next));
     get("member-edit-cancel").addEventListener("click", () => dialog.close());
     return {open,close:() => { if (dialog.open) dialog.close(); }};
   }

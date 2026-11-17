@@ -99,11 +99,17 @@ td:last-child{font-weight:700}
 .team-box header{padding:9px 12px;background:#e9eee7;display:flex;align-items:center;justify-content:space-between}
 .team-box header strong{font-size:18px;color:#354f3d}
 .team-box header span{font-size:13px;color:#546b58}
+.team-box .team-heading-button{display:flex;align-items:center;justify-content:space-between;gap:4px;width:100%;min-height:30px;padding:0;border:0;background:transparent;text-align:left}
+.team-box .team-heading-button:hover strong{text-decoration:underline}
 .team-box ul{margin:0;padding:4px 8px;list-style:none}
 .team-box li{font-size:15px;display:flex;gap:8px;align-items:center;padding:7px 5px;border-bottom:1px solid #edf0ec;border-radius:6px}
 .team-box li:last-child{border:0}
 .team-box .member-edit-button{width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:34px;padding:4px 5px;background:transparent;border-color:transparent;text-align:left}
 .team-box .member-edit-button:hover{background:#f5f6fb;border-color:#b0b7d6}
+.team-box-with-add{display:flex;flex-direction:column}
+.team-box .member-add-button{flex:1;min-height:40px;margin:4px 6px 6px;padding:5px 3px;border:1px dashed #cbd2de;background:#fff;color:#454b73;font-size:13px}
+.team-box .member-add-button:hover{background:#f5f6fb;border-color:#9099bb}
+#member-edit-dialog .dialog-actions{flex-wrap:wrap}
 .member-edit-picker{display:grid;gap:10px;margin-block-start:14px}
 .member-edit-picker label{display:grid;gap:4px;font-size:14px;font-weight:700}
 .member-edit-picker select{width:100%}

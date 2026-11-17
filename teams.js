@@ -5,7 +5,7 @@
   const fields = ["class","number","gender","name","height","ability","initiative"];
   const conditions = {class:null,gender:null,height:null,ability:false,initiative:false};
   let roster = [], selectedClasses = new Set(), result = [], revision = 0;
-  let individualResult = false;
+  let individualResult = false, resultTargetSize = 1;
   let singletonPlan = null;
   let pendingAction = null, storageProblem = false;
   const mobile = navigator.userAgentData?.mobile ||
@@ -226,14 +226,20 @@
         "브라우저 저장 공간을 사용할 수 없습니다. 명단은 저장되지 않았습니다." : error.message);
     }
   }
-  function teamCards(teams, groupPicker, individual = false, editMember) {
+  function teamCards(teams, groupPicker, individual, targetSize, editMember) {
     const placed = TeamMemberEdit.assignments(teams);
     return teams.map((members,index) => {
       const box = element("section","team-box"), header = document.createElement("header");
-      const title = element("div","team-card-title");
+      const title = element("span","team-card-title");
       if (!individual) {
+        const menu = element("button","team-heading-button");
+        menu.type = "button";
+        menu.setAttribute("aria-haspopup","dialog");
+        menu.setAttribute("aria-label",(index+1)+"팀 관리 · "+members.length+"명");
         title.append(element("span","team-number",String(index+1)),element("strong","",(index+1)+"팀"));
-        header.append(title,element("span","",members.length+"명"));
+        menu.append(title,element("span","",members.length+"명"));
+        menu.addEventListener("click", () => editMember(index,undefined,true));
+        header.append(menu);
         box.append(header);
       }
       const list = element("ul",members.length >= 3 ? "team-members team-members-columns" : "team-members");
@@ -250,13 +256,22 @@
       }
       const picker = groupPicker?.(index);
       if (picker) box.append(picker);
-      box.append(list); return box;
+      if (members.length) box.append(list);
+      if (members.length < targetSize) {
+        box.classList.add("team-box-with-add");
+        const add = element("button","member-add-button",members.length ? "+ 학생 추가" : "공석 · 학생 추가");
+        add.type = "button";
+        add.setAttribute("aria-label",(index+1)+(individual ? "번 참가 자리" : "팀")+"에 학생 추가");
+        add.addEventListener("click", () => editMember(index));
+        box.append(add);
+      }
+      return box;
     });
   }
   function renderResults() {
     const current = result;
-    get("team-results").replaceChildren(...teamCards(current,undefined,individualResult,(teamIndex,memberIndex) => {
-      memberEditor.open({teams:current,teamIndex,memberIndex,roster,individual:individualResult,apply(next) {
+    get("team-results").replaceChildren(...teamCards(current,undefined,individualResult,resultTargetSize,(teamIndex,memberIndex,teamActions) => {
+      memberEditor.open({teams:current,teamIndex,memberIndex,teamActions,roster,individual:individualResult,apply(next) {
         if (result !== current) return;
         if (!next.length) {
           clearResults();
@@ -273,9 +288,10 @@
       }});
     }));
   }
-  function finishTeams(teams, studentCount, individual = false) {
+  function finishTeams(teams, studentCount, individual = false, targetSize = 1) {
     result = teams;
     individualResult = individual;
+    resultTargetSize = targetSize;
     images.clear();
     get("save-teams-image").disabled = false;
     get("save-teams-excel").disabled = false;
@@ -294,7 +310,7 @@
     renderResults(); message();
   }
   const singletonDialog = get("singleton-dialog");
-  function askAboutSmallerTeams(teams, indexes, studentCount, largestSize) {
+  function askAboutSmallerTeams(teams, indexes, studentCount, largestSize, targetSize) {
     const choices = indexes.map(index => {
       const members = teams[index];
       const candidates = TeamBalance.duplicateCandidates(teams,index,conditions);
@@ -340,7 +356,7 @@
       });
       return {index,candidates,additions,mode,select,panel};
     });
-    singletonPlan = {teams,studentCount,choices};
+    singletonPlan = {teams,studentCount,choices,targetSize};
     get("singleton-teams").replaceChildren(...choices.map(choice => choice.panel));
     get("singleton-status").textContent = "";
     singletonDialog.showModal();
@@ -353,7 +369,7 @@
   });
   get("confirm-singletons").addEventListener("click", () => {
     if (!singletonPlan) return;
-    const {teams,studentCount,choices} = singletonPlan;
+    const {teams,studentCount,choices,targetSize} = singletonPlan;
     const selected = select => [...select.selectedOptions].filter(option => option.value !== "");
     const missing = choices.find(({mode,select,additions}) => mode.value === "manual" && selected(select).length !== additions);
     if (missing) {
@@ -381,7 +397,7 @@
       }
     }
     singletonDialog.close();
-    finishTeams(teams,studentCount);
+    finishTeams(teams,studentCount,false,targetSize);
   });
   function generate() {
     try {
@@ -396,12 +412,13 @@
       const target = Number(get(sizeMode ? "team-capacity" : "team-count").value);
       const teams = TeamBalance.makeTeams(students,target,conditions,sizeMode);
       const largestSize = Math.max(...teams.map(team => team.length));
+      const targetSize = sizeMode ? target : largestSize;
       const smallerTeams = teams.flatMap((team,index) => team.length < largestSize ? [index] : []);
       if (smallerTeams.length) {
-        askAboutSmallerTeams(teams,smallerTeams,students.length,largestSize);
+        askAboutSmallerTeams(teams,smallerTeams,students.length,largestSize,targetSize);
         return;
       }
-      finishTeams(teams,students.length);
+      finishTeams(teams,students.length,false,targetSize);
     } catch (error) { message(error.message); }
   }
   document.querySelector(".condition-groups").addEventListener("click", event => {
@@ -509,15 +526,17 @@
     if (!storageProblem) message("다른 탭에서 변경한 저장 명단을 반영했습니다.");
   });
   const memberEditor = TeamMemberEdit.init(get);
-  const fixtures = FixtureView.init(get,element,teamCards,() => ({teams:result,individual:individualResult,roster}), () => !get("editor").hidden,memberEditor);
+  const fixtures = FixtureView.init(get,element,teamCards,() =>
+    ({teams:result,individual:individualResult,targetSize:resultTargetSize,roster}), () => !get("editor").hidden,memberEditor);
   const images = TeamImage.init(get);
   get("save-teams-image").addEventListener("click", () => images.open({
     title:individualResult ? "개인전 참가자" : "팀편성 결과",
-    subtitle:individualResult ? result.length+"명" : result.length+"팀 · "+result.flat().length+"명", private:true,
-    cards:individualResult ? [{title:"참가자",lines:result.map(([student]) => ({text:student.class+"반 "+student.number+"번 "+student.name}))}] :
+    subtitle:individualResult ? result.flat().length+"명" : result.length+"팀 · "+result.flat().length+"명", private:true,
+    cards:individualResult ? [{title:"참가자",lines:result.map(([student]) =>
+      ({text:student ? student.class+"반 "+student.number+"번 "+student.name : "공석"}))}] :
       result.map((members,index) => ({title:(index+1)+"팀 · "+members.length+"명",
-      lines:members.map(student => ({text:student.class+"반 "+student.number+"번  "+student.name+(student.duplicate ? " (중복)" : ""),
-        color:showGenderColors ? (student.gender === "남" ? "male" : "female") : ""}))}))
+      lines:members.length ? members.map(student => ({text:student.class+"반 "+student.number+"번  "+student.name+(student.duplicate ? " (중복)" : ""),
+        color:showGenderColors ? (student.gender === "남" ? "male" : "female") : ""})) : [{text:"공석"}]}))
   }));
   get("save-fixtures-image").addEventListener("click", () => images.open(fixtures.exportSchedule()));
   get("save-teams-excel").addEventListener("click", () => {
