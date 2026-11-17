@@ -96,30 +96,55 @@ const TeamFixtures = (() => {
     return rosters.map(roster => [...roster].filter(student => counts.get(student) > 1));
   }
 
+  function teamClasses(teams) {
+    return teams.map(team => {
+      const first = team[0]?.class;
+      return first && team.every(student => student.class === first) ? first : undefined;
+    });
+  }
+
   function playOrder(phases, capacity = Infinity) {
-    const rounds = [];
+    const rounds = [], lastClassRound = new Map();
     let previous = new Set();
     for (const phase of phases) {
-      let shared = phase.filter(game => game.players.length);
-      let fillers = phase.filter(game => !game.players.length);
-      while (shared.length || fillers.length) {
-        const round = [], occupied = new Set();
-        function place(game) {
-          if (round.length >= capacity || game.resources.some(resource => occupied.has(resource))) return false;
+      const pending = new Set(phase);
+      const remainingByClass = new Map(), represented = new Set();
+      for (const game of phase) {
+        for (const cls of game.classes) remainingByClass.set(cls,(remainingByClass.get(cls) ?? 0)+1);
+      }
+      while (pending.size) {
+        if ([...remainingByClass.keys()].every(cls => represented.has(cls))) represented.clear();
+        const round = [], occupied = new Set(), classCounts = new Map();
+        const available = [...pending].filter(game => game.players.every(player => !previous.has(player)));
+        for (let slot = 0; slot < capacity && available.length; slot++) {
+          let bestIndex = -1, bestNewClasses = -1, bestLoad = Infinity, bestRecent = Infinity;
+          for (const [index,game] of available.entries()) {
+            if (game.resources.some(resource => occupied.has(resource))) continue;
+            const newClasses = game.classes.filter(cls => !represented.has(cls)).length;
+            if (newClasses < bestNewClasses) continue;
+            const load = game.classes.reduce((sum,cls) => sum+(classCounts.get(cls) ?? 0),0);
+            const recent = Math.max(-1,...game.classes.map(cls => lastClassRound.get(cls) ?? -1));
+            if (newClasses === bestNewClasses) {
+              if (load > bestLoad || (load === bestLoad && recent > bestRecent)) continue;
+              if (load === bestLoad && recent === bestRecent && game.players.length <= available[bestIndex].players.length) continue;
+            }
+            bestIndex = index; bestNewClasses = newClasses; bestLoad = load; bestRecent = recent;
+          }
+          if (bestIndex < 0) break;
+          const [game] = available.splice(bestIndex,1);
+          pending.delete(game);
           round.push(game);
           for (const resource of game.resources) occupied.add(resource);
-          return true;
+          for (const cls of game.classes) {
+            represented.add(cls);
+            classCounts.set(cls,(classCounts.get(cls) ?? 0)+1);
+            const remaining = remainingByClass.get(cls)-1;
+            if (remaining) remainingByClass.set(cls,remaining);
+            else remainingByClass.delete(cls);
+          }
         }
-        // Prefer teams whose shared students did not play in the previous round.
-        shared = shared.filter(game => game.players.some(player => previous.has(player)) || !place(game));
-        if (!round.length && shared.length) {
-          if (fillers.length) place(fillers.shift());
-          else shared = shared.filter(game => !place(game));
-        } else {
-          // Save some unrelated matches to use as breaks for the remaining shared matches.
-          const fillerBudget = Math.max(0,fillers.length-shared.length);
-          fillers = fillers.filter((game,index) => index >= fillerBudget || !place(game));
-        }
+        // If only recently played students remain, leave this round open for rest.
+        for (const cls of classCounts.keys()) lastClassRound.set(cls,rounds.length);
         rounds.push(round);
         previous = new Set(round.flatMap(game => game.players));
       }
@@ -127,21 +152,23 @@ const TeamFixtures = (() => {
     return rounds;
   }
 
-  function tournamentOrder(bracket, shared, capacity) {
-    const possible = new Map(), phases = [];
+  function tournamentOrder(bracket, shared, capacity, classes = []) {
+    const possible = new Map(), knownClass = new Map(), phases = [];
     for (const stage of bracket.stages) {
       const phase = phases[stage.depth-1] ??= [];
       for (const {id,a,b} of stage.matches) {
         const playersFor = ref => ref.team === undefined ? possible.get(ref.match) : shared[ref.team];
         const players = [...new Set([...playersFor(a),...playersFor(b)])];
         possible.set(id,players);
-        phase.push({id,resources:players,players});
+        const [left,right] = [a,b].map(ref => ref.team === undefined ? knownClass.get(ref.match) : classes[ref.team]);
+        if (left && left === right) knownClass.set(id,left);
+        phase.push({id,resources:players,players,classes:[...new Set([left,right].filter(Boolean))]});
       }
     }
     return playOrder(phases,capacity);
   }
 
-  function leagueOrder(cards, shared, capacity) {
+  function leagueOrder(cards, shared, capacity, classes = []) {
     const phases = new Map();
     for (const [cardIndex,card] of cards.entries()) {
       const phaseNumber = card.phase ?? (card.title.includes("2차 · ") ? 2 : 1);
@@ -151,7 +178,7 @@ const TeamFixtures = (() => {
         for (const [gameIndex,[a,b]] of round.games.entries()) {
           const players = [...new Set([...shared[a],...shared[b]])];
           phase.push({a,b,cardIndex,roundIndex,key:[cardIndex,roundIndex,gameIndex].join(":"),
-            players,resources:[a,b,...players]});
+            players,resources:[a,b,...players],classes:[...new Set([classes[a],classes[b]].filter(Boolean))]});
         }
       }
     }
@@ -160,5 +187,5 @@ const TeamFixtures = (() => {
     return playOrder(phasesInOrder,capacity);
   }
 
-  return {shuffle,league,tournament,resolve,scoreResult,sharedPlayers,tournamentOrder,leagueOrder};
+  return {shuffle,league,tournament,resolve,scoreResult,sharedPlayers,teamClasses,tournamentOrder,leagueOrder};
 })();

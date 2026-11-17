@@ -96,6 +96,7 @@ const FixtureView = (() => {
     let teams = [], assignments = [], bracket = null, diagrams = [], leagueCards = [], rankLines = [];
     let picks = new Map(), leaguePicks = new Map(), schedule = null;
     let shared = [], playRounds = [], roundOfMatch = new Map();
+    let classes = [];
     const setup = () => get("fixture-mode").value;
     const groupMode = () => ["groups","split"].includes(setup());
     const manual = () => groupMode() && get("fixture-assignment").value === "manual";
@@ -107,6 +108,7 @@ const FixtureView = (() => {
       return student ? student.class+"반 "+student.number+"번 "+student.name : (id+1)+"번 참가 자리 · 공석";
     };
     const memberNames = id => individual ? "" : teams[id].map(student => student.name).join(", ");
+    const roundTeamName = id => !individual && classes[id] ? classes[id]+"반 "+teamName(id) : teamName(id);
     const entrantCount = () => individual ? teams.filter(team => team.length).length+"명" : teams.length+"팀";
     function matchSide(label, members) {
       const button = el("button","match-side");
@@ -393,7 +395,7 @@ const FixtureView = (() => {
       const note = schedule.options.capacity ? "라운드마다 최대 "+schedule.options.capacity+"경기" : "동시 경기 수 제한 없음";
       order.append(el("p","small",note+" · 같은 라운드의 경기만 동시에 진행하세요."));
       const list = el("ol");
-      for (const round of playRounds) list.append(el("li","",round.map(labelGame).join(" / ")));
+      for (const round of playRounds) list.append(el("li","",round.length ? round.map(labelGame).join(" / ") : "휴식 · 중복 배정 학생"));
       order.append(list);
       rows.prepend(order);
       return order;
@@ -469,7 +471,7 @@ const FixtureView = (() => {
         grid.append(section);
       }
       rows.replaceChildren(grid);
-      const order = showOrder(({a,b}) => teamName(a)+" vs "+teamName(b)+(samePlayerOnBothTeams(a,b) ? " (출전 팀 확인)" : ""));
+      const order = showOrder(({a,b}) => roundTeamName(a)+" vs "+roundTeamName(b)+(samePlayerOnBothTeams(a,b) ? " (출전 팀 확인)" : ""));
       if (order) order.open = Boolean(orderWasOpen);
       rows.scrollTop = scrollTop;
     }
@@ -565,7 +567,9 @@ const FixtureView = (() => {
       rows.prepend(ranks);
       const order = showOrder(({id}) => {
         const match = bracket.matches[id-1];
-        return id+"경기"+(samePlayerOnBothTeams(resolved.teamOf(match.a),resolved.teamOf(match.b)) ? " (출전 팀 확인)" : "");
+        const left = resolved.teamOf(match.a), right = resolved.teamOf(match.b);
+        return id+"경기"+(left === undefined || right === undefined ? "" : " · "+roundTeamName(left)+" vs "+roundTeamName(right))+
+          (samePlayerOnBothTeams(left,right) ? " (출전 팀 확인)" : "");
       });
       if (order) {
         order.open = Boolean(orderWasOpen);
@@ -643,12 +647,14 @@ const FixtureView = (() => {
     function renderSchedule() {
       playRounds = []; roundOfMatch = new Map();
       shared = TeamFixtures.sharedPlayers(teams);
+      classes = TeamFixtures.teamClasses(teams);
       const capacity = schedule.options.capacity ?? Infinity;
-      const scheduleRounds = Number.isFinite(capacity) || shared.some(players => players.length);
+      const scheduleRounds = Number.isFinite(capacity) || shared.some(players => players.length) ||
+        new Set(classes.filter(Boolean)).size > 1;
       if (schedule.family === "knockout") {
         bracket = TeamFixtures.tournament(teams.map((_,index) => index),schedule.mode === "placement");
         if (scheduleRounds) {
-          playRounds = TeamFixtures.tournamentOrder(bracket,shared,capacity);
+          playRounds = TeamFixtures.tournamentOrder(bracket,shared,capacity,classes);
           playRounds.forEach((round,index) => round.forEach(({id}) => roundOfMatch.set(id,index+1)));
         }
         renderBracket();
@@ -657,7 +663,7 @@ const FixtureView = (() => {
           ...set,rounds:TeamFixtures.league(set.ids,set.limit ?? Infinity)
         }));
         if (scheduleRounds) {
-          playRounds = TeamFixtures.leagueOrder(leagueCards,shared,capacity);
+          playRounds = TeamFixtures.leagueOrder(leagueCards,shared,capacity,classes);
           for (const card of leagueCards) card.playRounds = [];
           for (const [index,round] of playRounds.entries()) {
             const gamesByCard = new Map();
@@ -837,7 +843,7 @@ const FixtureView = (() => {
             [...picks].filter(([,result]) => result.scores).sort(([a],[b]) => a-b).map(([id,result]) =>
               ({text:id+"경기 · "+teamName(result.left)+" vs "+teamName(result.right)+" · "+scoreSummary(result,true)}))}] : []),
           ...(playRounds.length ? [{title:"경기 진행 순서",lines:playRounds.map((round,index) =>
-            ({text:(index+1)+"라운드 · "+round.map(({id}) => id+"경기").join(" / ")}))}] : [])
+            ({text:(index+1)+"라운드 · "+(round.length ? round.map(({id}) => id+"경기").join(" / ") : "휴식")}))}] : [])
         ] :
           leagueCards.map((card,cardIndex) => ({
             title:card.title,
