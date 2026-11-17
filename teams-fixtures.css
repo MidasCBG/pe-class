@@ -7,11 +7,6 @@
 .team-box header strong{color:#383e69}
 .team-box li{flex-wrap:wrap}
 .member-name{overflow-wrap:anywhere}
-.fixture-entry{display:flex;justify-content:flex-end}
-.fixture-capacity{justify-content:flex-start;align-items:center;gap:7px;flex-wrap:wrap}
-.fixture-capacity label{font-size:14px;font-weight:700;color:#42475d}
-.fixture-capacity input{width:76px}
-.fixture-capacity .primary{margin-left:auto}
 .fixture-play-order{padding:8px 12px;border:1px solid #dce0eb;border-radius:10px;background:#f8f9fc}
 .fixture-play-order summary{font-size:14px;font-weight:800;cursor:pointer}
 .fixture-play-order p{margin-top:5px}
@@ -23,17 +18,32 @@
 .gender-color-button[aria-pressed=true]{color:#343d6b;background:#e7e9f6;border-color:#929ac6}
 .gender-color-state{font-size:12px;border-radius:5px;padding:1px 5px;background:#eef0ee;color:#4d5a52}
 .gender-color-button[aria-pressed=true] .gender-color-state{background:#494c78;color:#fff}
-.fixture-controls{background:#f8f9fb;border:1px solid var(--line);border-radius:14px;padding:11px;display:grid;gap:8px}
-.fixture-selects{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
-.fixture-selects label,.image-options label{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#42475d}
-.fixture-selects input[type=number]{width:64px}
+.fixture-controls{container-type:inline-size;display:grid;gap:7px}
+.fixture-control-groups{display:grid;gap:6px 8px;grid-template-columns:minmax(0,1fr);align-items:stretch}
+.fixture-control-group{min-inline-size:0;margin:0;padding:4px 8px 8px;border:1px solid var(--line);border-radius:10px;background:#f8f9fb}
+.fixture-control-group legend{padding-inline:4px;color:#34385c;font-size:14px;font-weight:800}
+.fixture-control-row{display:flex;align-items:end;flex-wrap:wrap;gap:6px 9px}
+.fixture-mode-fields{display:contents}
+.fixture-field{display:grid;gap:3px;min-inline-size:0;max-inline-size:100%;color:#42475d;font-size:12px;font-weight:700}
+.fixture-field select{width:100%}
+.fixture-number input{width:74px}
+.fixture-toggle-row{display:flex;gap:5px;flex-wrap:wrap}
+.fixture-operation .primary{margin-inline-start:auto;min-height:36px;font-size:14px;white-space:nowrap}
+#fixture-hint{padding-inline:3px}
+.image-options label{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#42475d}
 .fixture-toggle{font-size:14px;min-height:34px}
 .fixture-toggle[aria-pressed=true]{color:#343d6b;background:#e7e9f6;border-color:#929ac6}
 #split-message{color:#8b3f32;margin-top:5px}
 #split-message:empty{display:none}
-.fixture-selects select,.group-picker select,.image-options select{border-color:#d3d6e4;font-size:14px;max-width:100%}
-.fixture-result-settings{border-top:1px solid var(--line);padding-top:8px}
-.fixture-result-settings label[hidden]{display:none}
+.fixture-field input,.fixture-field select,.group-picker select,.image-options select{border-color:#d3d6e4;font-size:14px;max-width:100%}
+@container (min-width:520px){
+  .fixture-control-groups{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fixture-operation{grid-column:1/-1}
+}
+@container (min-width:900px){
+  .fixture-control-groups{grid-template-columns:minmax(0,.9fr) minmax(0,1fr) minmax(0,1.4fr)}
+  .fixture-operation{grid-column:auto}
+}
 .fixture-workspace{grid-template-columns:clamp(255px,29%,385px) minmax(0,1fr)}
 .fixture-roster .card-header,.fixture-board .card-header{flex-wrap:wrap}
 .fixture-team-list,.fixture-schedule{display:grid;min-width:0;min-height:95px;overflow:auto;grid-auto-rows:max-content;align-content:start;gap:8px;flex:1}

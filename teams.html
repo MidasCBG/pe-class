@@ -6,12 +6,12 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>팀편성 · 체육 교실</title>
 <link rel="stylesheet" href="./teams.css?v=2026-team-form-layout">
-<link rel="stylesheet" href="./teams-fixtures.css?v=match-scores">
+<link rel="stylesheet" href="./teams-fixtures.css?v=fixture-control-layout">
 <script defer src="./teams-excel.js?v=fixture-workbooks"></script>
 <script defer src="./teams-balance.js?v=2026-team-size-balance"></script>
 <script defer src="./teams-fixtures.js?v=match-scores"></script>
 <script defer src="./teams-bracket.js?v=2026-individual-fixtures"></script>
-<script defer src="./teams-fixtures-ui.js?v=fixture-workbooks"></script>
+<script defer src="./teams-fixtures-ui.js?v=fixture-control-layout"></script>
 <script defer src="./teams-image.js?v=2026-individual-fixtures"></script>
 <script defer src="./teams.js?v=fixture-workbooks"></script>
 </head>
@@ -100,36 +100,47 @@
         </div>
       </header>
       <div class="fixture-controls">
-        <div class="fixture-selects"><label>경기 방식 <select id="fixture-family"><option value="knockout">토너먼트</option><option value="league">리그</option></select></label>
-          <label>세부 방식 <select id="fixture-mode"></select></label></div>
+        <div class="fixture-control-groups">
+          <fieldset class="fixture-control-group">
+            <legend>경기 방식</legend>
+            <div class="fixture-control-row">
+              <label class="fixture-field">방식 <select id="fixture-family"><option value="knockout">토너먼트</option><option value="league">리그</option></select></label>
+              <label class="fixture-field">세부 방식 <select id="fixture-mode" aria-describedby="fixture-hint"></select></label>
+            </div>
+          </fieldset>
+          <fieldset class="fixture-control-group">
+            <legend>결과 기록</legend>
+            <div class="fixture-control-row">
+              <label class="fixture-field">기록 방식 <select id="fixture-result-mode"><option value="winner">승리 팀 선택</option><option value="score">점수 입력</option></select></label>
+              <label class="fixture-field" id="fixture-score-format-label" hidden>점수 형식 <select id="fixture-score-format"><option value="points">점수만</option><option value="sets">세트별 점수</option></select></label>
+              <label class="fixture-field" id="fixture-set-limit-label" hidden>세트 방식 <select id="fixture-set-limit"><option value="3">3세트 중 2선승</option><option value="5">5세트 중 3선승</option><option value="7">7세트 중 4선승</option></select></label>
+            </div>
+          </fieldset>
+          <fieldset class="fixture-control-group fixture-operation">
+            <legend>진행 조건</legend>
+            <div class="fixture-control-row">
+              <div id="partial-options" class="fixture-mode-fields" hidden>
+                <label class="fixture-field fixture-number">진행할 라운드 <input id="partial-rounds" type="number" value="2" min="1" max="99" step="1"></label>
+                <button id="same-class" class="fixture-toggle" type="button" aria-pressed="false">같은 반 팀끼리만</button>
+              </div>
+              <div id="group-options" class="fixture-mode-fields" hidden>
+                <label class="fixture-field fixture-number" id="group-count-label">조 수 <input id="fixture-group-count" type="number" value="2" min="2" max="50" step="1"></label>
+                <label class="fixture-field">조 배정 <select id="fixture-assignment"><option value="random">무작위</option><option value="manual">수동</option></select></label>
+              </div>
+              <div id="split-options" class="fixture-field" role="group" aria-labelledby="split-options-label" hidden>
+                <span id="split-options-label">분리 기준</span>
+                <div class="fixture-toggle-row">
+                  <button id="split-by-class" class="fixture-toggle" type="button" aria-pressed="false">반별</button>
+                  <button id="split-by-gender" class="fixture-toggle" type="button" aria-pressed="false">성별</button>
+                </div>
+              </div>
+              <label class="fixture-field fixture-number">동시 진행 경기 수 <input id="parallel-games" type="number" min="1" max="50" step="1" placeholder="미지정"></label>
+              <button id="make-fixtures" class="primary icon-with-text" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v5H4zm0 11h5v5H4zm5-8h5v10H9m5-5h6"/></svg>대진표 만들기</button>
+            </div>
+            <p id="split-message" class="small" role="status"></p>
+          </fieldset>
+        </div>
         <p id="fixture-hint" class="small"></p>
-        <div class="fixture-selects fixture-result-settings" role="group" aria-label="경기 결과 기록 설정">
-          <label>결과 기록 <select id="fixture-result-mode"><option value="winner">승리 팀 선택</option><option value="score">점수 입력</option></select></label>
-          <label id="fixture-score-format-label" hidden>점수 기록 방식 <select id="fixture-score-format"><option value="points">점수만</option><option value="sets">세트별 점수</option></select></label>
-          <label id="fixture-set-limit-label" hidden>세트 방식 <select id="fixture-set-limit"><option value="3">3세트 중 2선승</option><option value="5">5세트 중 3선승</option><option value="7">7세트 중 4선승</option></select></label>
-        </div>
-        <div id="partial-options" class="fixture-selects" hidden>
-          <label>진행할 라운드 <input id="partial-rounds" type="number" value="2" min="1" max="99" step="1"></label>
-          <button id="same-class" class="fixture-toggle" type="button" aria-pressed="false">같은 반 팀끼리만</button>
-        </div>
-        <div id="group-options" class="fixture-selects" hidden>
-          <label id="group-count-label">조 수 <input id="fixture-group-count" type="number" value="2" min="2" max="50" step="1"></label>
-          <label>조 배정 <select id="fixture-assignment"><option value="random">무작위</option><option value="manual">수동</option></select></label>
-        </div>
-        <div id="split-options" hidden>
-          <div class="fixture-selects" role="group" aria-label="스플릿 리그 진행 기준">
-            <button id="split-by-class" class="fixture-toggle" type="button" aria-pressed="false">반별</button>
-            <button id="split-by-gender" class="fixture-toggle" type="button" aria-pressed="false">성별</button>
-            <span class="small">선택한 기준별로 1차 리그와 상·하위조 경기를 진행합니다.</span>
-          </div>
-          <p id="split-message" class="small" role="status"></p>
-        </div>
-        <div class="fixture-entry fixture-capacity">
-          <label for="parallel-games">동시 진행 경기 수</label>
-          <input id="parallel-games" type="number" min="1" max="50" step="1" placeholder="미지정" aria-describedby="parallel-games-hint">
-          <span id="parallel-games-hint" class="small">선택 사항</span>
-          <button id="make-fixtures" class="primary icon-with-text" type="button" title="대진표 만들기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h5v5H4zm0 11h5v5H4zm5-8h5v10H9m5-5h6"/></svg>대진표 만들기</button>
-        </div>
       </div>
       <p id="fixture-status" class="small" role="status"></p>
       <div id="fixture-schedule" class="fixture-schedule"></div>
