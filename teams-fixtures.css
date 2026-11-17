@@ -32,6 +32,8 @@
 #split-message{color:#8b3f32;margin-top:5px}
 #split-message:empty{display:none}
 .fixture-selects select,.group-picker select,.image-options select{border-color:#d3d6e4;font-size:14px;max-width:100%}
+.fixture-result-settings{border-top:1px solid var(--line);padding-top:8px}
+.fixture-result-settings label[hidden]{display:none}
 .fixture-workspace{grid-template-columns:clamp(255px,29%,385px) minmax(0,1fr)}
 .fixture-roster .card-header,.fixture-board .card-header{flex-wrap:wrap}
 .fixture-team-list,.fixture-schedule{display:grid;min-width:0;min-height:95px;overflow:auto;grid-auto-rows:max-content;align-content:start;gap:8px;flex:1}
@@ -75,6 +77,16 @@
 .bracket-game{box-sizing:border-box;position:absolute;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:30px repeat(2,var(--match-slot-height));gap:4px;padding:7px 8px;background:#fff;border:1px solid #c3c9db;border-radius:10px;text-align:center}
 .bracket-final{border-color:#696f99;background:#f3f4fb}
 .match-id{font-size:12px;line-height:1.4;color:#454b6b;font-weight:800;text-align:left;align-self:center;overflow-wrap:anywhere}
+.match-heading{display:flex;align-items:center;justify-content:space-between;gap:3px;min-width:0}
+.match-score-button{min-width:0;min-height:30px;padding:2px 5px;font-size:12px;line-height:1.2;background:#eef0fa;color:#353961;border-color:#c7cce4;font-variant-numeric:tabular-nums}
+.match-score-summary{font-size:12px;font-weight:800;color:#353961;font-variant-numeric:tabular-nums}
+.league-match .match-score-button{max-width:76px;overflow-wrap:anywhere}
+.bracket-game .match-score-button,.bracket-game .match-score-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:68%}
+.fixture-score-fields{display:grid;grid-template-columns:auto repeat(2,minmax(0,1fr));align-items:center;gap:7px;margin-block:12px}
+.fixture-score-fields strong,.fixture-score-fields span{overflow-wrap:anywhere;text-align:center;font-size:14px}
+.fixture-score-fields input{width:100%;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
+#fixture-score-status{color:#8b3f32}
+#fixture-score-status:empty{display:none}
 .match-side{position:relative;width:100%;min-width:0;min-height:30px;padding:1px 13px 1px 6px;overflow-wrap:anywhere;border-radius:7px;font-size:13px;line-height:1.2}
 .match-team-name,.match-members{display:block}
 .match-side .match-members{font-size:11px;line-height:13px;font-weight:500}

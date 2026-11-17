@@ -37,29 +37,58 @@ const TeamExcel = (() => {
     ev.setUint16(10, directory.length, true); ev.setUint32(12, directorySize, true); ev.setUint32(16, offset, true);
     return new Blob([...chunks, ...directory, end], {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   }
+  const documentRelationships = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  const relationshipRoot = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+  const xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>';
+  const escapeXML = value => String(value).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/g, "")
+    .replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"})[char]);
+  function columnName(index) {
+    let name = "";
+    for (let current = index+1; current; current = Math.floor((current-1)/26)) {
+      name = String.fromCharCode(65+(current-1)%26)+name;
+    }
+    return name;
+  }
+  function workbook(sheets) {
+    const overrides = [], tabs = [], relations = [], files = {};
+    for (const [index,{name,rows,widths = [],validation = "",hidden = false}] of sheets.entries()) {
+      const id = index+1, path = "worksheets/sheet"+id+".xml";
+      overrides.push('<Override PartName="/xl/'+path+'" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+      tabs.push('<sheet name="'+escapeXML(name)+'" sheetId="'+id+'" r:id="rId'+id+'"'+(hidden ? ' state="hidden"' : '')+'/>');
+      relations.push('<Relationship Id="rId'+id+'" Type="'+documentRelationships+'/worksheet" Target="'+path+'"/>');
+      const cols = widths.map((width,i) => '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+width+'" customWidth="1"/>').join("");
+      files["xl/"+path] = xmlHeader+'<worksheet xmlns="'+spreadsheetNS+'">'+(cols ? "<cols>"+cols+"</cols>" : "")+
+        '<sheetData>'+rows.map((values,r) => '<row r="'+(r+1)+'">'+values.map((value,c) => {
+          if (value === "" || value == null) return "";
+          const address = columnName(c)+(r+1);
+          return typeof value === "number" ? '<c r="'+address+'"><v>'+value+'</v></c>' :
+            '<c r="'+address+'" t="inlineStr"><is><t xml:space="preserve">'+escapeXML(value)+'</t></is></c>';
+        }).join("")+'</row>').join("")+'</sheetData>'+validation+'</worksheet>';
+    }
+    const blob = zip({
+      "[Content_Types].xml": xmlHeader+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+overrides.join("")+'</Types>',
+      "_rels/.rels": xmlHeader+relationshipRoot+'<Relationship Id="rId1" Type="'+documentRelationships+'/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+      "xl/workbook.xml": xmlHeader+'<workbook xmlns="'+spreadsheetNS+'" xmlns:r="'+documentRelationships+'"><sheets>'+tabs.join("")+'</sheets></workbook>',
+      "xl/_rels/workbook.xml.rels": xmlHeader+relationshipRoot+relations.join("")+'</Relationships>',
+      ...files
+    });
+    if (blob.size > 5*1024*1024) throw new Error("엑셀 파일이 5 MB를 초과합니다. 참가 인원 또는 경기 수를 줄여 주세요.");
+    return blob;
+  }
   function template() {
-    const sheet = (rows, validations = "") => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-      '<worksheet xmlns="' + spreadsheetNS + '"><cols><col min="1" max="3" width="12" customWidth="1"/><col min="4" max="7" width="18" customWidth="1"/></cols><sheetData>' +
-      rows.map((values, r) => '<row r="' + (r+1) + '">' + values.map((value, c) =>
-        '<c r="' + String.fromCharCode(65+c) + (r+1) + '" t="inlineStr"><is><t>' + value + '</t></is></c>').join("") + '</row>').join("") +
-      '</sheetData>' + validations + '</worksheet>';
     const validation = '<dataValidations count="4">' + [
       ["C2:C1001", "남,여"], ["E2:E1001", "상,중,하"], ["F2:F1001", "상,중,하"], ["G2:G1001", "상,중,하"]
     ].map(([range, values]) => '<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="' + range + '"><formula1>&quot;' + values + '&quot;</formula1></dataValidation>').join("") + '</dataValidations>';
-    return zip({
-      "[Content_Types].xml": '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',
-      "_rels/.rels": '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
-      "xl/workbook.xml": '<?xml version="1.0"?><workbook xmlns="' + spreadsheetNS + '" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="학생 명단" sheetId="1" r:id="rId1"/><sheet name="입력 안내" sheetId="2" r:id="rId2"/></sheets></workbook>',
-      "xl/_rels/workbook.xml.rels": '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>',
-      "xl/worksheets/sheet1.xml": sheet([headers], validation),
-      "xl/worksheets/sheet2.xml": sheet([
+    return workbook([
+      {name:"학생 명단",rows:[headers],widths:[12,12,12,18,18,18,18],validation},
+      {name:"입력 안내",widths:[100],rows:[
         ["학생 명단 시트의 2행부터 입력하세요. 예시 학생은 포함되어 있지 않습니다."],
         ["반과 번호는 숫자, 성별은 남 또는 여, 이름은 필수입니다."],
         ["키, 운동 능력, 적극성은 상·중·하 중 선택하며 비워 두면 중으로 편성합니다."],
         [".xlsx 형식으로 저장하세요. 처음 4개 열의 제목을 바꾸지 마세요."],
         ["엑셀 파일은 이 기기에서만 읽습니다. 불러온 뒤 확인하고 명단 저장을 눌러 주세요."]
-      ])
-    });
+      ]}
+    ]);
   }
   async function entries(file) {
     if (file.size > 5 * 1024 * 1024) throw new Error("엑셀 파일은 5 MB 이하로 올려 주세요.");
@@ -121,14 +150,15 @@ const TeamExcel = (() => {
     };
   }
   const nodes = (parent, name) => [...parent.getElementsByTagNameNS("*", name)];
-  async function read(file) {
+  async function readSheet(file,name,columnCount,rowLimit) {
     if (!/\.xlsx$/i.test(file.name)) throw new Error(".xlsx 형식의 엑셀 파일을 선택해 주세요.");
     const open = await entries(file);
     const book = await open("xl/workbook.xml"), relations = await open("xl/_rels/workbook.xml.rels");
     if (!book || !relations) throw new Error("엑셀 통합 문서를 찾을 수 없습니다.");
-    const sheet = nodes(book, "sheet")[0];
-    if (!sheet) throw new Error("첫 번째 시트를 찾을 수 없습니다.");
-    const relId = sheet.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id");
+    const sheets = nodes(book, "sheet");
+    const sheet = name ? sheets.find(item => item.getAttribute("name") === name) : sheets[0];
+    if (!sheet) throw new Error(name ? "체육 교실에서 내려받은 대진편성 엑셀을 선택해 주세요." : "첫 번째 시트를 찾을 수 없습니다.");
+    const relId = sheet.getAttributeNS(documentRelationships,"id");
     const rel = nodes(relations, "Relationship").find(item => item.getAttribute("Id") === relId);
     if (!rel || rel.getAttribute("TargetMode") === "External") throw new Error("외부 연결 시트는 읽을 수 없습니다.");
     const target = rel.getAttribute("Target");
@@ -138,22 +168,25 @@ const TeamExcel = (() => {
     if (!xml) throw new Error("학생 명단 시트를 찾을 수 없습니다.");
     const shared = strings ? nodes(strings,"si").map(item => nodes(item,"t").map(t => t.textContent).join("")) : [];
     const rows = nodes(xml,"row");
-    if (rows.length > 1001) throw new Error("학생은 한 번에 최대 1,000명까지 입력해 주세요.");
-    const values = rows.map(row => {
-      const line = Array(7).fill("");
+    if (rows.length > rowLimit) throw new Error(name ? "복원 데이터가 너무 큽니다." : "학생은 한 번에 최대 1,000명까지 입력해 주세요.");
+    return rows.map(row => {
+      const line = Array(columnCount).fill("");
       for (const cell of nodes(row,"c")) {
         const column = cell.getAttribute("r")?.match(/^([A-Z]+)/)?.[1];
         if (!column) continue;
         let index = 0;
         for (const char of column) index = index*26+char.charCodeAt(0)-64;
-        if (index > 7) continue;
+        if (index > columnCount) continue;
         if (nodes(cell,"f").length) throw new Error("명단에는 수식 대신 값만 입력해 주세요.");
         const value = nodes(cell,"v")[0]?.textContent || "";
-        line[index-1] = (cell.getAttribute("t")==="s" ? shared[Number(value)] || "" :
-          cell.getAttribute("t")==="inlineStr" ? nodes(cell,"t").map(t => t.textContent).join("") : value).trim();
+        line[index-1] = cell.getAttribute("t")==="s" ? shared[Number(value)] || "" :
+          cell.getAttribute("t")==="inlineStr" ? nodes(cell,"t").map(t => t.textContent).join("") : value;
       }
       return line;
-    }).filter(row => row.some(Boolean));
+    });
+  }
+  async function read(file) {
+    const values = (await readSheet(file,null,7,1001)).map(row => row.map(value => value.trim())).filter(row => row.some(Boolean));
     const first = values.shift();
     if (!first || headers.slice(0,4).some((name,i) => first[i] !== name)) throw new Error("첫 행의 열 순서를 반, 번호, 성별, 이름으로 맞춰 주세요.");
     if (headers.slice(4).some((name,i) => first[i+4] && first[i+4].replace(/\s/g,"") !== name.replace(/\s/g,""))) {
@@ -162,5 +195,47 @@ const TeamExcel = (() => {
     return values.map(row => ({class:row[0],number:row[1],gender:row[2],name:row[3],
       height:row[4],ability:row[5],initiative:row[6]}));
   }
-  return {template, read};
+  function participants(teams,individual) {
+    return {
+      name:individual ? "참가자" : "참가팀",
+      widths:[12,10,10,21,10,13],
+      rows:[[individual ? "참가 번호" : "팀","반","번호","이름","성별","중복 배정"],
+        ...teams.flatMap((team,index) => team.map(student =>
+          [individual ? index+1 : (index+1)+"팀",Number(student.class),Number(student.number),student.name,student.gender,student.duplicate ? "중복" : ""]))]
+    };
+  }
+  const snapshotSheet = "대진 복원 데이터", snapshotMarker = "PE-CLASS-FIXTURES/1";
+  function teamResults(teams,individual) {
+    return workbook([participants(teams,individual)]);
+  }
+  function fixtureResults(snapshot,matches) {
+    const chunks = JSON.stringify(snapshot).match(/[\s\S]{1,8000}/gu);
+    return workbook([
+      participants(snapshot.teams,snapshot.individual),
+      {name:"대진표",widths:[29,14,21,21,21,12,49,21],rows:matches},
+      {name:"복원 안내",widths:[100],rows:[
+        ["체육 교실 → 대진편성 → 엑셀 불러오기에서 이 파일을 선택하세요."],
+        ["저장 당시의 참가팀, 대진 및 경기 결과를 복원합니다. 엑셀에서 보이는 시트를 편집해도 복원 내용은 바뀌지 않습니다."],
+        ["참가자 이름이 포함되어 있습니다. 필요한 기기에만 파일을 옮겨 주세요."]
+      ]},
+      {name:snapshotSheet,hidden:true,rows:[[snapshotMarker],...chunks.map((chunk,index) => [index+1,chunk])]}
+    ]);
+  }
+  async function readFixtureResults(file) {
+    const [[marker],...chunks] = await readSheet(file,snapshotSheet,2,500).then(rows => rows.length ? rows : [[]]);
+    if (marker !== snapshotMarker || !chunks.length || chunks.some(([index,chunk],i) => index !== String(i+1) || !chunk)) {
+      throw new Error("대진 복원 데이터가 없거나 손상되었습니다.");
+    }
+    try { return JSON.parse(chunks.map(([,chunk]) => chunk).join("")); }
+    catch { throw new Error("대진 복원 데이터가 손상되었습니다."); }
+  }
+  function download(blob,filename) {
+    const url = URL.createObjectURL(blob), link = document.createElement("a");
+    link.href = url; link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url),30000);
+  }
+  return {template,read,teamResults,fixtureResults,readFixtureResults,download};
 })();

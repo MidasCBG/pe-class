@@ -70,6 +70,23 @@ const TeamFixtures = (() => {
     }
     return {outcomes,teamOf};
   }
+  function scoreResult(rows, winsNeeded = 1) {
+    const scores = [], setWins = [0,0];
+    for (const [index,[a,b]] of rows.entries()) {
+      if (a === null && b === null) continue;
+      if (scores.length !== index || ![a,b].every(value => Number.isSafeInteger(value) && value >= 0)) {
+        throw new Error("경기 순서대로 두 팀의 점수를 모두 입력해 주세요.");
+      }
+      if (a === b) throw new Error("승리 팀을 정할 수 있도록 동점이 아닌 최종 점수를 입력해 주세요.");
+      if (setWins.includes(winsNeeded)) throw new Error("승부가 결정된 뒤의 세트는 비워 주세요.");
+      scores.push([a,b]);
+      setWins[a > b ? 0 : 1]++;
+    }
+    const winner = setWins.indexOf(winsNeeded);
+    if (winner < 0) throw new Error(winsNeeded === 1 ? "두 팀의 최종 점수를 입력해 주세요." :
+      "한 팀이 "+winsNeeded+"세트를 이길 때까지 점수를 입력해 주세요.");
+    return {winner,scores,...(winsNeeded > 1 ? {setWins} : {})};
+  }
   function sharedPlayers(teams) {
     const rosters = teams.map(team => new Set(team.map(student => student.class+":"+student.number)));
     const counts = new Map();
@@ -143,5 +160,5 @@ const TeamFixtures = (() => {
     return playOrder(phasesInOrder,capacity);
   }
 
-  return {shuffle,league,tournament,resolve,sharedPlayers,tournamentOrder,leagueOrder};
+  return {shuffle,league,tournament,resolve,scoreResult,sharedPlayers,tournamentOrder,leagueOrder};
 })();

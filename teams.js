@@ -73,6 +73,7 @@
     result = [];
     images.clear();
     get("save-teams-image").disabled = true;
+    get("save-teams-excel").disabled = true;
     get("team-results").replaceChildren(element("div","empty results-empty","반과 조건을 선택한 뒤 팀편성하기를 눌러 주세요."));
     get("result-summary").textContent = "선택한 학생으로 인원수를 고르게 나눕니다.";
   }
@@ -254,6 +255,7 @@
     individualResult = individual;
     images.clear();
     get("save-teams-image").disabled = false;
+    get("save-teams-excel").disabled = false;
     if (individual) {
       get("result-summary").textContent = "개인전 참가자 "+studentCount+"명";
       renderResults(); message();
@@ -494,6 +496,11 @@
         color:showGenderColors ? (student.gender === "남" ? "male" : "female") : ""}))}))
   }));
   get("save-fixtures-image").addEventListener("click", () => images.open(fixtures.exportSchedule()));
+  get("save-teams-excel").addEventListener("click", () => {
+    try {
+      TeamExcel.download(TeamExcel.teamResults(result,individualResult),"체육_팀편성_결과.xlsx");
+    } catch (error) { message(error.message); }
+  });
   roster = readSaved(); selectedClasses = new Set(roster.map(student => student.class));
   renderClasses(); renderRoster();
 })();

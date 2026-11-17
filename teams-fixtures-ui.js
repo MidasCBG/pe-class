@@ -2,8 +2,8 @@
 const FixtureView = (() => {
   const modes = {
     knockout: [
-      ["single","한 번 지면 탈락","승리한 팀만 다음 라운드에 올라갑니다. 경기마다 승리 팀을 선택하세요."],
-      ["placement","패자조 포함 · 전체 순위","첫 패배 후에도 순위 결정전을 합니다. 각 경기의 승리 팀을 선택하면 1위부터 마지막 순위까지 채워집니다."]
+      ["single","한 번 지면 탈락","승리한 팀만 다음 라운드에 올라갑니다. 경기마다 결과를 기록하세요."],
+      ["placement","패자조 포함 · 전체 순위","첫 패배 후에도 순위 결정전을 합니다. 경기 결과를 기록하면 1위부터 마지막 순위까지 채워집니다."]
     ],
     league: [
       ["full","풀리그","모든 팀이 다른 모든 팀과 한 번씩 경기합니다."],
@@ -14,6 +14,83 @@ const FixtureView = (() => {
   };
   const storageKey = "pe-class.fixtures.v1";
   const mixedGenderMessage = "혼성팀이 포함되어 성별로 진행할 수 없습니다. 성별로 진행하려면 팀편성에서 남녀 분리를 선택해 주세요.";
+  function validateWorkbook(state) {
+    const invalid = () => { throw new Error("엑셀의 참가팀, 대진 또는 경기 결과를 복원할 수 없습니다."); };
+    const integer = (value,min,max) => Number.isInteger(value) && value >= min && value <= max;
+    if (state?.version !== 1 || typeof state.individual !== "boolean" ||
+        !Array.isArray(state.teams) || !integer(state.teams.length,1,1000)) invalid();
+    for (const team of state.teams) {
+      if (!Array.isArray(team) || !integer(team.length,1,state.individual ? 1 : 1000)) invalid();
+      for (const student of team) {
+        if (!student || typeof student.class !== "string" || !/^\d{1,2}$/.test(student.class) ||
+          !integer(Number(student.class),1,99) || !integer(student.number,1,999) ||
+          !["남","여"].includes(student.gender) || typeof student.name !== "string" ||
+          !integer(student.name.length,1,30) || (student.duplicate !== undefined && student.duplicate !== true)) invalid();
+      }
+    }
+    const {schedule,picks,leaguePicks} = state;
+    const teamId = id => integer(id,0,state.teams.length-1);
+    if (!Array.isArray(picks) || !Array.isArray(leaguePicks)) invalid();
+    if (schedule === null) {
+      if (picks.length || leaguePicks.length) invalid();
+      return;
+    }
+    if (!schedule || !Object.hasOwn(modes,schedule.family) || !modes[schedule.family].some(([mode]) => mode === schedule.mode) ||
+        typeof schedule.name !== "string" || !Array.isArray(schedule.sets) || state.teams.length < 2) invalid();
+    const options = schedule.options;
+    if (!options || (options.capacity !== null && !integer(options.capacity,1,50)) ||
+        !Array.isArray(options.assignments) || options.assignments.length > state.teams.length ||
+        options.assignments.some(value => value !== null && !integer(value,0,49)) ||
+        !["random","manual"].includes(options.assignment) ||
+        !["rounds","groups"].every(key => typeof options[key] === "string" && options[key].length <= 32)) invalid();
+    function checkResult(result,sides) {
+      if (!result || !sides.includes(result.winner)) invalid();
+      if (result.scores === undefined) {
+        if (result.setWins !== undefined) invalid();
+        return;
+      }
+      if (!Array.isArray(result.scores) || !integer(result.scores.length,1,7) ||
+        result.scores.some(pair => !Array.isArray(pair) || pair.length !== 2 || pair.some(value => !integer(value,0,Number.MAX_SAFE_INTEGER)))) invalid();
+      const setWins = result.setWins;
+      if (setWins !== undefined && (!Array.isArray(setWins) || setWins.length !== 2 ||
+        setWins.some(value => !integer(value,0,4)) || Math.max(...setWins) < 2)) invalid();
+      const calculated = TeamFixtures.scoreResult(result.scores,setWins ? Math.max(...setWins) : 1);
+      if (sides[calculated.winner] !== result.winner || (setWins && setWins.some((n,i) => n !== calculated.setWins[i]))) invalid();
+    }
+    if (schedule.family === "knockout") {
+      if (leaguePicks.length || schedule.sets.length) invalid();
+      const bracket = TeamFixtures.tournament(state.teams.map((_,i) => i),schedule.mode === "placement");
+      const records = new Map(picks);
+      if (records.size !== picks.length) invalid();
+      for (const [id,result] of records) {
+        if (!integer(id,1,bracket.matches.length) || !teamId(result?.left) || !teamId(result?.right) || result.left === result.right) invalid();
+        checkResult(result,[result.left,result.right]);
+      }
+      TeamFixtures.resolve(bracket,records);
+      if (records.size !== picks.length) invalid();
+      return;
+    }
+    if (picks.length || !integer(schedule.sets.length,1,state.teams.length*2)) invalid();
+    let gameCount = 0;
+    for (const set of schedule.sets) {
+      if (!set || typeof set.title !== "string" || !Array.isArray(set.ids) ||
+        !integer(set.ids.length,2,state.teams.length) || new Set(set.ids).size !== set.ids.length || !set.ids.every(teamId) ||
+        (set.limit !== undefined && !integer(set.limit,1,99))) invalid();
+      const size = set.ids.length;
+      gameCount += Math.min(set.limit ?? Infinity,size-1+size%2)*Math.floor(size/2);
+      if (gameCount > 50000) invalid();
+    }
+    const records = new Map(leaguePicks);
+    if (records.size !== leaguePicks.length) invalid();
+    for (const [card,set] of schedule.sets.entries()) {
+      TeamFixtures.league(set.ids,set.limit).forEach(({games},round) => games.forEach((sides,game) => {
+        const key = [card,round,game].join(":");
+        if (records.has(key)) checkResult(records.get(key),sides);
+        records.delete(key);
+      }));
+    }
+    if (records.size) invalid();
+  }
   function init(get, el, teamCards, readTeams, editing) {
     let teams = [], assignments = [], bracket = null, diagrams = [], leagueCards = [], rankLines = [];
     let picks = new Map(), leaguePicks = new Map(), schedule = null;
@@ -44,13 +121,20 @@ const FixtureView = (() => {
     const hasMixedGender = () => teams.some(team => new Set(team.map(student => student.gender)).size > 1);
     const rows = get("fixture-schedule");
     const presentation = get("fixture-presentation");
+    const scoreDialog = get("fixture-score-dialog");
+    const resultMode = get("fixture-result-mode"), scoreFormat = get("fixture-score-format"), setLimit = get("fixture-set-limit");
+    let scoreEditor;
     const board = rows.parentElement;
+    function snapshot() {
+      return {
+        version:1,teams,individual,schedule,picks:[...picks],leaguePicks:[...leaguePicks],
+        resultSettings:{mode:resultMode.value,format:scoreFormat.value,setLimit:setLimit.value}
+      };
+    }
     function persist() {
       try {
         if (!teams.length) localStorage.removeItem(storageKey);
-        else localStorage.setItem(storageKey,JSON.stringify({
-          version:1,teams,individual,schedule,picks:[...picks],leaguePicks:[...leaguePicks]
-        }));
+        else localStorage.setItem(storageKey,JSON.stringify(snapshot()));
         return true;
       } catch {
         status("이 브라우저에 저장할 수 없습니다. 현재 탭에서만 결과가 유지됩니다.");
@@ -71,6 +155,7 @@ const FixtureView = (() => {
     get("close-presentation").addEventListener("click",closePresentation);
     presentation.addEventListener("cancel",event => { event.preventDefault(); closePresentation(); });
     function resetSchedule() {
+      if (scoreDialog.open) scoreDialog.close();
       closePresentation();
       bracket = null; picks.clear(); leaguePicks.clear(); schedule = null;
       diagrams = []; leagueCards = []; rankLines = [];
@@ -79,8 +164,81 @@ const FixtureView = (() => {
       get("save-fixtures-image").disabled = true;
       get("expand-fixtures").disabled = true;
     }
+    function updateResultSettings() {
+      get("fixture-score-format-label").hidden = resultMode.value !== "score";
+      get("fixture-set-limit-label").hidden = resultMode.value !== "score" || scoreFormat.value !== "sets";
+    }
+    function scoreSummary(result, detailed = false) {
+      if (!result?.scores) return "";
+      const points = result.scores.map(pair => pair.join(":")).join(", ");
+      if (!result.setWins) return points;
+      const sets = result.setWins.join(":")+" 세트";
+      return detailed ? sets+" ("+points+")" : sets;
+    }
+    function openScoreEditor(sides, recorded, save) {
+      const hasSets = scoreFormat.value === "sets";
+      const count = hasSets ? Number(setLimit.value) : 1;
+      const winsNeeded = (count+1)/2;
+      const fields = get("fixture-score-fields");
+      const names = sides.map(teamName);
+      fields.replaceChildren(el("span"),...names.map(name => el("strong","",name)));
+      get("fixture-score-hint").textContent = hasSets ?
+        winsNeeded+"세트를 먼저 이기면 승리합니다. 진행한 세트의 두 팀 점수를 순서대로 입력하세요." :
+        "두 팀의 최종 점수를 입력하면 승리 팀이 자동으로 반영됩니다.";
+      get("fixture-score-status").textContent = "";
+      get("clear-fixture-score").hidden = !recorded;
+      const inputs = Array.from({length:count}, (_,index) => {
+        const title = hasSets ? (index+1)+"세트" : "점수";
+        const values = Boolean(recorded?.setWins) === hasSets ? recorded?.scores?.[index] : null;
+        const pair = names.map((name,side) => {
+          const input = el("input");
+          input.type = "number"; input.min = "0"; input.step = "1"; input.inputMode = "numeric";
+          input.setAttribute("aria-label",name+" "+(hasSets ? title+" 점수" : "최종 점수"));
+          input.value = values?.[side] ?? "";
+          return input;
+        });
+        fields.append(el("span","",title),...pair);
+        return pair;
+      });
+      scoreEditor = {sides,inputs,winsNeeded,save};
+      scoreDialog.showModal();
+      inputs[0][0].focus();
+    }
+    get("cancel-fixture-score").addEventListener("click", () => scoreDialog.close());
+    get("clear-fixture-score").addEventListener("click", () => {
+      scoreDialog.close();
+      scoreEditor.save(null);
+    });
+    get("fixture-score-form").addEventListener("submit", event => {
+      event.preventDefault();
+      const {sides,inputs,winsNeeded,save} = scoreEditor;
+      let result;
+      try {
+        result = TeamFixtures.scoreResult(inputs.map(pair => pair.map(input =>
+          input.value === "" ? null : input.valueAsNumber)),winsNeeded);
+      } catch (error) {
+        get("fixture-score-status").textContent = error.message;
+        return;
+      }
+      scoreDialog.close();
+      save({...result,winner:sides[result.winner]});
+    });
+    function scoreButton(label, open) {
+      const button = el("button","match-score-button");
+      button.type = "button";
+      button.dataset.matchLabel = label;
+      button.addEventListener("click",open);
+      return button;
+    }
+    function updateScoreButton(button, recorded) {
+      const summary = scoreSummary(recorded,true);
+      button.textContent = scoreSummary(recorded) || "점수";
+      button.title = summary || "점수 기록";
+      button.setAttribute("aria-label",button.dataset.matchLabel+" 점수 기록"+(summary ? " · "+summary : ""));
+    }
     function renderTeams() {
       get("fixture-count").textContent = entrantCount();
+      get("save-fixtures-excel").disabled = !teams.length;
       get("fixture-team-list").replaceChildren(...(teams.length ? teamCards(teams, index => {
         if (!manual()) return;
         const label = el("label","group-picker","배정할 조 ");
@@ -188,7 +346,7 @@ const FixtureView = (() => {
     function standings(card, cardIndex) {
       const totals = new Map(card.ids.map(team => [team,{team,wins:0,losses:0}]));
       card.rounds.forEach((round,roundIndex) => round.games.forEach(([a,b],gameIndex) => {
-        const winner = leaguePicks.get([cardIndex,roundIndex,gameIndex].join(":"));
+        const winner = leaguePicks.get([cardIndex,roundIndex,gameIndex].join(":"))?.winner;
         if (winner !== a && winner !== b) return;
         totals.get(winner).wins++;
         totals.get(winner === a ? b : a).losses++;
@@ -221,6 +379,9 @@ const FixtureView = (() => {
       return order;
     }
     function renderLeague() {
+      const orderWasOpen = rows.querySelector(".fixture-play-order")?.open;
+      const scrollTop = rows.scrollTop;
+      const scoreMode = resultMode.value === "score";
       const grid = el("div","league-grid");
       for (const [cardIndex,card] of leagueCards.entries()) {
         const section = el("section","league-card");
@@ -252,22 +413,32 @@ const FixtureView = (() => {
           roundCard.append(el("h4","schedule-round",round.number+"라운드"));
           for (const {a,b,key} of round.games) {
             const match = el("div","league-match");
+            function save(result) {
+              if (result) leaguePicks.set(key,result);
+              else leaguePicks.delete(key);
+              refreshMatch(); refreshStandings(); persist();
+            }
+            const center = scoreMode ? scoreButton(round.number+"라운드 "+teamName(a)+" 대 "+teamName(b),
+              () => openScoreEditor([a,b],leaguePicks.get(key),save)) : el("span","match-score-summary");
             const buttons = [a,b].map(team => {
               const button = matchSide(teamName(team),memberNames(team));
               button.type = "button";
+              button.disabled = scoreMode;
               button.setAttribute("aria-label",round.number+"라운드 "+teamName(team)+" 승리");
-              button.addEventListener("click", () => {
-                if (leaguePicks.get(key) === team) leaguePicks.delete(key);
-                else leaguePicks.set(key,team);
-                refreshMatch(); refreshStandings(); persist();
-              });
+              button.addEventListener("click", () => save(leaguePicks.get(key)?.winner === team ? null : {winner:team}));
               return button;
             });
             function refreshMatch() {
-              [a,b].forEach((team,index) => buttons[index].setAttribute("aria-pressed",String(leaguePicks.get(key) === team)));
+              const result = leaguePicks.get(key);
+              [a,b].forEach((team,index) => buttons[index].setAttribute("aria-pressed",String(result?.winner === team)));
+              if (scoreMode) updateScoreButton(center,result);
+              else {
+                center.textContent = scoreSummary(result) || "vs";
+                center.title = scoreSummary(result,true);
+              }
             }
             refreshMatch();
-            match.append(buttons[0],el("span","","vs"),buttons[1]);
+            match.append(buttons[0],center,buttons[1]);
             roundCard.append(match);
             if (samePlayerOnBothTeams(a,b)) roundCard.append(el("p","match-note fixture-player-warning",sharedMatchWarning));
           }
@@ -278,9 +449,12 @@ const FixtureView = (() => {
         grid.append(section);
       }
       rows.replaceChildren(grid);
-      showOrder(({a,b}) => teamName(a)+" vs "+teamName(b)+(samePlayerOnBothTeams(a,b) ? " (출전 팀 확인)" : ""));
+      const order = showOrder(({a,b}) => teamName(a)+" vs "+teamName(b)+(samePlayerOnBothTeams(a,b) ? " (출전 팀 확인)" : ""));
+      if (order) order.open = Boolean(orderWasOpen);
+      rows.scrollTop = scrollTop;
     }
     function renderBracket(focusMatch,focusTeam) {
+      const scoreMode = resultMode.value === "score";
       const resolved = TeamFixtures.resolve(bracket,picks);
       diagrams = TeamBracket.diagrams(bracket,resolved,teamName,memberNames);
       rankLines = bracket.ranks.map((ref,i) => {
@@ -323,11 +497,30 @@ const FixtureView = (() => {
           node.caption = (round ? round+"R · " : "")+id+"경기"+(node.final && index === 0 ? " · 결승" : "")+(collision ? " ⚠" : "");
           const caption = el("span","match-id",node.caption);
           if (collision) caption.title = sharedMatchWarning;
-          card.append(caption);
+          const heading = el("div","match-heading");
+          heading.append(caption);
+          const result = picks.get(id);
+          const ready = left !== undefined && right !== undefined;
+          if (scoreMode && ready) {
+            const button = scoreButton(id+"경기 "+teamName(left)+" 대 "+teamName(right), () =>
+              openScoreEditor([left,right],result,next => {
+                if (next) picks.set(id,{...next,left,right});
+                else picks.delete(id);
+                renderBracket(id); persist();
+              }));
+            updateScoreButton(button,result);
+            heading.append(button);
+            if (id === focusMatch) focus = button;
+          } else if (result?.scores) {
+            const summary = el("span","match-score-summary",scoreSummary(result));
+            summary.title = scoreSummary(result,true);
+            heading.append(summary);
+          }
+          card.append(heading);
           for (const [slot,{label,titleLines,memberLines,won}] of node.slots.entries()) {
             const team = node.participants[slot];
             const button = matchSide(titleLines.join("\n"),memberLines.join("\n"));
-            button.type = "button"; button.disabled = left === undefined || right === undefined;
+            button.type = "button"; button.disabled = scoreMode || !ready;
             button.title = label;
             button.setAttribute("aria-pressed",String(won));
             button.setAttribute("aria-label",id+"경기 "+label+" 승리");
@@ -336,7 +529,7 @@ const FixtureView = (() => {
               else picks.set(id,{left,right,winner:team});
               renderBracket(id,team); persist();
             });
-            if (id === focusMatch && team === focusTeam) focus = button;
+            if (!scoreMode && id === focusMatch && team === focusTeam) focus = button;
             card.append(button);
           }
           chart.append(card);
@@ -367,6 +560,7 @@ const FixtureView = (() => {
     const routeWindow = window.parent;
     function syncView() {
       const showFixtures = routeWindow.location.hash.split("/")[0] === "#fixtures";
+      if (!showFixtures && scoreDialog.open) scoreDialog.close();
       if (!showFixtures && presentation.open) closePresentation();
       teamPage.hidden = showFixtures;
       get("fixture-page").hidden = !showFixtures;
@@ -400,6 +594,16 @@ const FixtureView = (() => {
     get("fixture-mode").addEventListener("change",updateOptions);
     get("fixture-assignment").addEventListener("change",updateOptions);
     get("fixture-group-count").addEventListener("change",updateOptions);
+    for (const select of [resultMode,scoreFormat,setLimit]) {
+      select.addEventListener("change", () => {
+        updateResultSettings();
+        if (select === resultMode && schedule) {
+          if (bracket) renderBracket();
+          else renderLeague();
+        }
+        persist();
+      });
+    }
     for (const id of ["same-class","split-by-class","split-by-gender"]) {
       get(id).addEventListener("click", () => {
         splitMessage("");
@@ -474,15 +678,17 @@ const FixtureView = (() => {
     bindReset("reset-fixtures","fixture-reset",() => {
       resetSchedule();
       return persist();
-    },"대진표와 승패 기록을 초기화했습니다.");
+    },"대진표와 경기 결과를 초기화했습니다.");
     bindReset("reset-fixture-teams","fixture-teams-reset",clear,"대진편성의 참가 팀과 대진표를 초기화했습니다.");
-    function restore() {
-      try {
-        const saved = JSON.parse(localStorage.getItem(storageKey));
+    function loadSnapshot(saved) {
         resetSchedule();
         teams = saved?.version === 1 && Array.isArray(saved.teams) ? saved.teams : [];
         individual = saved?.individual === true && teams.every(team => team.length === 1);
         assignments = [];
+        resultMode.value = saved?.resultSettings?.mode === "score" ? "score" : "winner";
+        scoreFormat.value = saved?.resultSettings?.format === "sets" ? "sets" : "points";
+        setLimit.value = ["3","5","7"].includes(saved?.resultSettings?.setLimit) ? saved.resultSettings.setLimit : "3";
+        updateResultSettings();
         get("parallel-games").value = "";
         for (const id of ["same-class","split-by-class","split-by-gender"]) setPressed(id,false);
         if (saved?.schedule && teams.length >= 2) {
@@ -501,10 +707,15 @@ const FixtureView = (() => {
           updateOptions();
           assignments = options.assignments.map(value => value ?? undefined);
           picks = new Map(saved.picks);
-          leaguePicks = new Map(saved.leaguePicks);
+          leaguePicks = new Map((saved.leaguePicks ?? []).map(([key,result]) =>
+            [key,typeof result === "number" ? {winner:result} : result]));
           renderSchedule();
         }
         renderTeams();
+    }
+    function restore() {
+      try {
+        loadSnapshot(JSON.parse(localStorage.getItem(storageKey)));
       } catch {
         teams = []; individual = false; assignments = []; resetSchedule(); renderTeams();
         status("저장된 대진표를 읽을 수 없습니다. 초기화한 뒤 다시 만들어 주세요.");
@@ -513,12 +724,89 @@ const FixtureView = (() => {
     addEventListener("storage",event => {
       if (event.key === storageKey || event.key === null) restore();
     });
+    function workbookMatches() {
+      const matches = [["구분","라운드","팀 A","팀 B","승리 팀","세트 결과 (A:B)","점수 (A:B)","비고"]];
+      function addMatch(group,round,left,right,result,note = "") {
+        matches.push([group,round,left,right,result ? teamName(result.winner) : "",
+          result?.setWins?.join(":") ?? "",result?.scores?.map(pair => pair.join(":")).join(", ") ?? "",note]);
+      }
+      if (bracket) {
+        const {teamOf} = TeamFixtures.resolve(bracket,picks);
+        const label = ref => {
+          const team = teamOf(ref);
+          return team === undefined ? ref.match+"경기 "+(ref.outcome === "winner" ? "승자" : "패자") : teamName(team);
+        };
+        for (const stage of bracket.stages) {
+          const group = stage.first+"~"+stage.last+"위";
+          for (const {id,a,b} of stage.matches) {
+            addMatch(group,roundOfMatch.get(id) ?? stage.depth,label(a),label(b),picks.get(id),id+"경기");
+          }
+          for (const idle of stage.idle) addMatch(group,stage.depth,label(idle),"",null,"부전승");
+        }
+      }
+      for (const [index,card] of leagueCards.entries()) {
+        for (const {number,games,idle} of displayLeagueRounds(card,index)) {
+          for (const {a,b,key} of games) addMatch(card.title,number,teamName(a),teamName(b),leaguePicks.get(key));
+          for (const team of idle) addMatch(card.title,number,teamName(team),"",null,"쉬는 팀");
+        }
+      }
+      return matches;
+    }
+    get("save-fixtures-excel").addEventListener("click", () => {
+      try {
+        const matches = workbookMatches();
+        TeamExcel.download(TeamExcel.fixtureResults(snapshot(),matches),"체육_대진편성_대진표.xlsx");
+      } catch (error) { status(error.message); }
+    });
+    const restoreDialog = get("fixture-restore-dialog"), importButton = get("load-fixtures-excel");
+    const importFile = get("fixtures-excel-file");
+    let pendingImport;
+    function applyWorkbook(state) {
+      const previous = snapshot();
+      try {
+        loadSnapshot(state);
+        if (persist()) status("엑셀에서 "+entrantCount()+(schedule ? "의 대진표와 경기 결과" : "의 참가 명단")+"를 불러왔습니다.");
+      } catch {
+        loadSnapshot(previous);
+        status("엑셀의 대진편성을 불러올 수 없습니다. 현재 대진편성은 유지됩니다.");
+      }
+    }
+    importButton.addEventListener("click", () => importFile.click());
+    importFile.addEventListener("change", async () => {
+      const file = importFile.files[0];
+      if (!file) return;
+      importButton.disabled = true;
+      status("");
+      try {
+        const state = await TeamExcel.readFixtureResults(file);
+        validateWorkbook(state);
+        if (!teams.length) applyWorkbook(state);
+        else {
+          pendingImport = state;
+          const count = state.teams.length+(state.individual ? "명" : "팀");
+          get("fixture-restore-summary").textContent = "엑셀에서 "+count+(state.schedule ? "의 대진편성을 가져옵니다." : "의 참가 명단을 가져옵니다.")+
+            " 현재 대진편성의 참가팀과 경기 기록을 덮어씁니다.";
+          restoreDialog.showModal();
+        }
+      } catch (error) { status(error.message); }
+      finally { importFile.value = ""; importButton.disabled = false; }
+    });
+    get("cancel-fixture-restore").addEventListener("click", () => restoreDialog.close());
+    restoreDialog.addEventListener("close", () => { pendingImport = undefined; });
+    get("confirm-fixture-restore").addEventListener("click", () => {
+      const state = pendingImport;
+      restoreDialog.close();
+      if (state) applyWorkbook(state);
+    });
     function exportSchedule() {
       return {
         title:"대진표", subtitle:schedule.name+" · "+entrantCount(), private:true,
         diagrams,
         cards:bracket ? [
           {title:schedule.mode === "single" ? (individual ? "우승자" : "우승 팀") : "전체 순위",lines:rankLines.map(text => ({text}))},
+          ...(Array.from(picks.values()).some(result => result.scores) ? [{title:"경기 점수",lines:
+            [...picks].filter(([,result]) => result.scores).sort(([a],[b]) => a-b).map(([id,result]) =>
+              ({text:id+"경기 · "+teamName(result.left)+" vs "+teamName(result.right)+" · "+scoreSummary(result,true)}))}] : []),
           ...(playRounds.length ? [{title:"경기 진행 순서",lines:playRounds.map((round,index) =>
             ({text:(index+1)+"라운드 · "+round.map(({id}) => id+"경기").join(" / ")}))}] : [])
         ] :
@@ -527,9 +815,11 @@ const FixtureView = (() => {
             lines:[...standings(card,cardIndex).map(({team,wins,losses,rate}) => ({text:teamName(team)+" · "+wins+"승 "+losses+"패 · "+rate})),...displayLeagueRounds(card,cardIndex).flatMap(round => [
               {text:round.number+"라운드",heading:true},
               ...round.games.map(({a,b,key}) => {
-                const winner = leaguePicks.get(key);
+                const result = leaguePicks.get(key);
+                const winner = result?.winner;
                 const nameWithMembers = team => individual ? teamName(team) : teamName(team)+" ("+memberNames(team)+")";
                 return {text:nameWithMembers(a)+" vs "+nameWithMembers(b)+(winner === undefined ? "" : " · "+teamName(winner)+" 승")+
+                  (result?.scores ? " · "+scoreSummary(result,true) : "")+
                   (samePlayerOnBothTeams(a,b) ? " · 출전 팀 확인" : "")};
               }),
               ...round.idle.map(team => ({text:"쉬는 팀 · "+teamName(team)}))

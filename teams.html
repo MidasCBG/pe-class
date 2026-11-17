@@ -6,14 +6,14 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>팀편성 · 체육 교실</title>
 <link rel="stylesheet" href="./teams.css?v=2026-team-form-layout">
-<link rel="stylesheet" href="./teams-fixtures.css?v=2026-team-size-controls">
-<script defer src="./teams-excel.js?v=1.7.6"></script>
+<link rel="stylesheet" href="./teams-fixtures.css?v=match-scores">
+<script defer src="./teams-excel.js?v=fixture-workbooks"></script>
 <script defer src="./teams-balance.js?v=2026-team-size-balance"></script>
-<script defer src="./teams-fixtures.js?v=1.7.6"></script>
+<script defer src="./teams-fixtures.js?v=match-scores"></script>
 <script defer src="./teams-bracket.js?v=2026-individual-fixtures"></script>
-<script defer src="./teams-fixtures-ui.js?v=2026-fixture-reset"></script>
+<script defer src="./teams-fixtures-ui.js?v=fixture-workbooks"></script>
 <script defer src="./teams-image.js?v=2026-individual-fixtures"></script>
-<script defer src="./teams.js?v=2026-short-team-roster"></script>
+<script defer src="./teams.js?v=fixture-workbooks"></script>
 </head>
 <body>
 <main class="team-page">
@@ -39,7 +39,7 @@
       </section>
     </section>
     <section class="card results-card" aria-labelledby="results-title">
-      <header class="card-header"><div><p class="eyebrow">02 / TEAMS</p><h2 id="results-title">팀편성 결과</h2></div><div class="result-header-tools"><span id="selected-count">선택 0명</span><button id="save-teams-image" class="icon-action image-button" type="button" aria-label="이미지 저장" title="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button></div></header>
+  <header class="card-header"><div><p class="eyebrow">02 / TEAMS</p><h2 id="results-title">팀편성 결과</h2></div><div class="result-header-tools"><span id="selected-count">선택 0명</span><button id="save-teams-excel" class="minor" type="button" disabled>엑셀 저장</button><button id="save-teams-image" class="icon-action image-button" type="button" aria-label="이미지 저장" title="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button></div></header>
       <div class="conditions">
         <div class="condition-title"><h3>편성 조건</h3><button id="reset-conditions" class="subtle" type="button">조건 초기화</button></div>
         <div class="condition-groups">
@@ -91,6 +91,9 @@
     <section class="card fixture-board" aria-labelledby="fixture-board-title">
       <header class="card-header"><div><p class="eyebrow">02 / MATCHES</p><h2 id="fixture-board-title">대진표</h2></div>
         <div class="result-header-tools"><span id="fixture-count" class="small">0팀</span>
+          <button id="load-fixtures-excel" class="minor" type="button">엑셀 불러오기</button>
+          <input id="fixtures-excel-file" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          <button id="save-fixtures-excel" class="minor" type="button" disabled>엑셀 저장</button>
           <button id="expand-fixtures" class="icon-action image-button" type="button" title="크게 보기" aria-label="크게 보기" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg></button>
           <button id="save-fixtures-image" class="icon-action image-button" type="button" title="이미지 저장" aria-label="이미지 저장" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></svg></button>
           <button id="reset-fixtures" class="icon-action danger" type="button" title="대진표 초기화" aria-label="대진표 초기화"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v5h5m-5 0a8 8 0 1 1 .5 6"/></svg></button>
@@ -100,6 +103,11 @@
         <div class="fixture-selects"><label>경기 방식 <select id="fixture-family"><option value="knockout">토너먼트</option><option value="league">리그</option></select></label>
           <label>세부 방식 <select id="fixture-mode"></select></label></div>
         <p id="fixture-hint" class="small"></p>
+        <div class="fixture-selects fixture-result-settings" role="group" aria-label="경기 결과 기록 설정">
+          <label>결과 기록 <select id="fixture-result-mode"><option value="winner">승리 팀 선택</option><option value="score">점수 입력</option></select></label>
+          <label id="fixture-score-format-label" hidden>점수 기록 방식 <select id="fixture-score-format"><option value="points">점수만</option><option value="sets">세트별 점수</option></select></label>
+          <label id="fixture-set-limit-label" hidden>세트 방식 <select id="fixture-set-limit"><option value="3">3세트 중 2선승</option><option value="5">5세트 중 3선승</option><option value="7">7세트 중 4선승</option></select></label>
+        </div>
         <div id="partial-options" class="fixture-selects" hidden>
           <label>진행할 라운드 <input id="partial-rounds" type="number" value="2" min="1" max="99" step="1"></label>
           <button id="same-class" class="fixture-toggle" type="button" aria-pressed="false">같은 반 팀끼리만</button>
@@ -132,14 +140,28 @@
   <header class="page-heading"><div><h2 id="presentation-title">대진표</h2><p id="presentation-mode" class="small"></p></div><button id="close-presentation" class="icon-action" type="button" title="큰 화면 닫기" aria-label="큰 화면 닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>
   <div id="presentation-body"></div>
 </dialog>
+<dialog id="fixture-score-dialog" aria-labelledby="fixture-score-title">
+  <form id="fixture-score-form">
+    <h2 id="fixture-score-title">경기 점수 기록</h2>
+    <p id="fixture-score-hint" class="small"></p>
+    <div id="fixture-score-fields" class="fixture-score-fields"></div>
+    <p id="fixture-score-status" class="small" role="alert"></p>
+    <div class="dialog-actions"><button id="clear-fixture-score" class="danger" type="button">기록 지우기</button><button id="cancel-fixture-score" class="minor" type="button">취소</button><button class="primary" type="submit">저장</button></div>
+  </form>
+</dialog>
 <dialog id="fixture-reset-dialog" aria-labelledby="fixture-reset-title">
   <h2 id="fixture-reset-title">대진표를 초기화할까요?</h2>
-  <p>저장된 대진표와 승패 기록을 지웁니다. 가져온 참가 팀은 남아 있어 새 대진표를 바로 만들 수 있습니다.</p>
+  <p>저장된 대진표와 경기 결과를 지웁니다. 가져온 참가 팀은 남아 있어 새 대진표를 바로 만들 수 있습니다.</p>
   <div class="dialog-actions"><button id="cancel-fixture-reset" class="minor" type="button">취소</button><button id="confirm-fixture-reset" class="danger" type="button">초기화</button></div>
+</dialog>
+<dialog id="fixture-restore-dialog" aria-labelledby="fixture-restore-title">
+  <h2 id="fixture-restore-title">엑셀의 대진편성을 불러올까요?</h2>
+  <p id="fixture-restore-summary"></p>
+  <div class="dialog-actions"><button id="cancel-fixture-restore" class="minor" type="button">취소</button><button id="confirm-fixture-restore" class="primary" type="button">불러오기</button></div>
 </dialog>
 <dialog id="fixture-teams-reset-dialog" aria-labelledby="fixture-teams-reset-title">
   <h2 id="fixture-teams-reset-title">대진편성의 참가 팀을 초기화할까요?</h2>
-  <p>가져온 참가 팀과 이 팀으로 만든 대진표·승패 기록을 지웁니다. 팀편성 화면의 결과는 남아 있어 다시 가져올 수 있습니다.</p>
+  <p>가져온 참가 팀과 이 팀으로 만든 대진표·경기 결과를 지웁니다. 팀편성 화면의 결과는 남아 있어 다시 가져올 수 있습니다.</p>
   <div class="dialog-actions"><button id="cancel-fixture-teams-reset" class="minor" type="button">취소</button><button id="confirm-fixture-teams-reset" class="danger" type="button">초기화</button></div>
 </dialog>
 <dialog id="singleton-dialog" aria-labelledby="singleton-title">
