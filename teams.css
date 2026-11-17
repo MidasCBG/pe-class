@@ -102,6 +102,12 @@ td:last-child{font-weight:700}
 .team-box ul{margin:0;padding:4px 8px;list-style:none}
 .team-box li{font-size:15px;display:flex;gap:8px;align-items:center;padding:7px 5px;border-bottom:1px solid #edf0ec;border-radius:6px}
 .team-box li:last-child{border:0}
+.team-box .member-edit-button{width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-height:34px;padding:4px 5px;background:transparent;border-color:transparent;text-align:left}
+.team-box .member-edit-button:hover{background:#f5f6fb;border-color:#b0b7d6}
+.member-edit-picker{display:grid;gap:10px;margin-block-start:14px}
+.member-edit-picker label{display:grid;gap:4px;font-size:14px;font-weight:700}
+.member-edit-picker select{width:100%}
+#member-edit-note:not(:empty){margin-top:12px}
 .student-tag{font-size:12px;color:#617062}
 .member-name{font-weight:750;flex:1}
 #team-results .team-box{container-type:inline-size}

@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; font-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>팀편성 · 체육 교실</title>
-<link rel="stylesheet" href="./teams.css?v=2026-team-form-layout">
+<link rel="stylesheet" href="./teams.css?v=member-edit">
 <link rel="stylesheet" href="./teams-fixtures.css?v=fixture-excel-guide">
 <script defer src="./teams-excel.js?v=fixture-workbooks"></script>
 <script defer src="./teams-balance.js?v=2026-team-size-balance"></script>
 <script defer src="./teams-fixtures.js?v=match-scores"></script>
 <script defer src="./teams-bracket.js?v=2026-individual-fixtures"></script>
-<script defer src="./teams-fixtures-ui.js?v=fixture-control-layout"></script>
+<script defer src="./teams-fixtures-ui.js?v=member-edit"></script>
 <script defer src="./teams-image.js?v=2026-individual-fixtures"></script>
-<script defer src="./teams.js?v=fixture-workbooks"></script>
+<script defer src="./teams-member-edit.js"></script>
+<script defer src="./teams.js?v=member-edit"></script>
 </head>
 <body>
 <main class="team-page">
@@ -178,6 +179,23 @@
   <h2 id="fixture-teams-reset-title">대진편성의 참가 팀을 초기화할까요?</h2>
   <p>가져온 참가 팀과 이 팀으로 만든 대진표·경기 결과를 지웁니다. 팀편성 화면의 결과는 남아 있어 다시 가져올 수 있습니다.</p>
   <div class="dialog-actions"><button id="cancel-fixture-teams-reset" class="minor" type="button">취소</button><button id="confirm-fixture-teams-reset" class="danger" type="button">초기화</button></div>
+</dialog>
+<dialog id="member-edit-dialog" aria-labelledby="member-edit-title">
+  <h2 id="member-edit-title"></h2>
+  <div id="member-edit-choice" class="dialog-actions">
+    <button id="member-edit-delete" class="danger" type="button">삭제</button>
+    <button id="member-edit-replace" class="primary" type="button">교체</button>
+  </div>
+  <div id="member-edit-picker" class="member-edit-picker" hidden>
+    <label>교체할 학생의 반<select id="member-edit-class"></select></label>
+    <label id="member-edit-student-field" hidden>교체할 학생<select id="member-edit-student"></select></label>
+    <button id="member-edit-pick" class="primary" type="button" disabled>교체하기</button>
+  </div>
+  <p id="member-edit-note" role="status"></p>
+  <div class="dialog-actions">
+    <button id="member-edit-cancel" class="minor" type="button" autofocus>취소</button>
+    <button id="member-edit-confirm" class="primary" type="button" hidden>확인</button>
+  </div>
 </dialog>
 <dialog id="singleton-dialog" aria-labelledby="singleton-title">
   <h2 id="singleton-title">인원이 적은 팀을 어떻게 편성할까요?</h2>

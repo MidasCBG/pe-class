@@ -91,7 +91,7 @@ const FixtureView = (() => {
     }
     if (records.size) invalid();
   }
-  function init(get, el, teamCards, readTeams, editing) {
+  function init(get, el, teamCards, readTeams, editing, memberEditor) {
     let teams = [], assignments = [], bracket = null, diagrams = [], leagueCards = [], rankLines = [];
     let picks = new Map(), leaguePicks = new Map(), schedule = null;
     let shared = [], playRounds = [], roundOfMatch = new Map();
@@ -253,7 +253,26 @@ const FixtureView = (() => {
         });
         label.append(select);
         return label;
-      }, individual) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
+      },individual,editParticipant) : [el("p","empty","팀편성을 마친 뒤 ‘팀편성 가져오기’를 눌러 주세요.")]));
+    }
+    function editParticipant(teamIndex,memberIndex) {
+      const current = teams;
+      const resetNeeded = replacement => Boolean(schedule && (individual || (!replacement && current[teamIndex].length === 1)));
+      memberEditor.open({
+        teams:current,teamIndex,memberIndex,roster:readTeams().roster,individual,
+        resetNotice:replacement => resetNeeded(replacement) ? "참가자가 바뀌어 현재 대진표와 경기 기록이 초기화됩니다." : "",
+        apply(next) {
+          if (teams !== current) return;
+          const removedTeam = next.length !== current.length;
+          const reset = Boolean(schedule && (individual || removedTeam));
+          teams = next;
+          if (removedTeam) assignments.splice(teamIndex,1);
+          if (reset) resetSchedule();
+          else if (schedule) renderSchedule();
+          renderTeams();
+          if (persist()) status(reset ? "참가 명단을 수정하고 대진표를 초기화했습니다." : "참가 명단을 수정했습니다.");
+        }
+      });
     }
     function clear() {
       teams = []; individual = false; assignments = [];
@@ -615,6 +634,7 @@ const FixtureView = (() => {
       });
     }
     function renderSchedule() {
+      playRounds = []; roundOfMatch = new Map();
       shared = TeamFixtures.sharedPlayers(teams);
       const capacity = schedule.options.capacity ?? Infinity;
       const scheduleRounds = Number.isFinite(capacity) || shared.some(players => players.length);

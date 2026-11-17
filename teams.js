@@ -68,6 +68,7 @@
     get("selected-count").textContent = "선택 "+(visible.length-excluded)+"명"+(excluded ? " · 제외 "+excluded+"명" : "");
   }
   function clearResults() {
+    memberEditor.close();
     if (get("singleton-dialog").open) get("singleton-dialog").close();
     singletonPlan = null;
     result = [];
@@ -225,7 +226,8 @@
         "브라우저 저장 공간을 사용할 수 없습니다. 명단은 저장되지 않았습니다." : error.message);
     }
   }
-  function teamCards(teams, groupPicker, individual = false) {
+  function teamCards(teams, groupPicker, individual = false, editMember) {
+    const placed = TeamMemberEdit.assignments(teams);
     return teams.map((members,index) => {
       const box = element("section","team-box"), header = document.createElement("header");
       const title = element("div","team-card-title");
@@ -235,11 +237,15 @@
         box.append(header);
       }
       const list = element("ul",members.length >= 3 ? "team-members team-members-columns" : "team-members");
-      for (const student of members) {
+      for (const [memberIndex,student] of members.entries()) {
         const row = element("li",student.gender === "남" ? "male" : "female");
-        row.append(element("span","student-tag",student.class+"반 "+student.number+"번"),
+        const button = element("button","member-edit-button");
+        button.type = "button";
+        button.append(element("span","student-tag",student.class+"반 "+student.number+"번"),
           element("span","member-name",student.name));
-        if (student.duplicate) row.append(element("span","duplicate-badge","중복"));
+        if (placed.get(TeamMemberEdit.key(student)).size > 1) button.append(element("span","duplicate-badge","★ 중복"));
+        button.addEventListener("click", () => editMember(index,memberIndex));
+        row.append(button);
         list.append(row);
       }
       const picker = groupPicker?.(index);
@@ -248,7 +254,24 @@
     });
   }
   function renderResults() {
-    get("team-results").replaceChildren(...teamCards(result, undefined, individualResult));
+    const current = result;
+    get("team-results").replaceChildren(...teamCards(current,undefined,individualResult,(teamIndex,memberIndex) => {
+      memberEditor.open({teams:current,teamIndex,memberIndex,roster,individual:individualResult,apply(next) {
+        if (result !== current) return;
+        if (!next.length) {
+          clearResults();
+          message("팀편성 결과의 학생을 모두 삭제했습니다.");
+          return;
+        }
+        result = next;
+        images.clear();
+        const count = TeamMemberEdit.assignments(result).size;
+        get("result-summary").textContent = individualResult ? "개인전 참가자 "+count+"명" :
+          count+"명 · "+result.length+"팀 · 팀별 "+result.map(team => team.length).join(" / ")+"명";
+        renderResults();
+        message("팀편성 결과를 수정했습니다.");
+      }});
+    }));
   }
   function finishTeams(teams, studentCount, individual = false) {
     result = teams;
@@ -485,7 +508,8 @@
     clearResults(); renderClasses(); renderRoster();
     if (!storageProblem) message("다른 탭에서 변경한 저장 명단을 반영했습니다.");
   });
-  const fixtures = FixtureView.init(get,element,teamCards,() => ({teams:result,individual:individualResult}), () => !get("editor").hidden);
+  const memberEditor = TeamMemberEdit.init(get);
+  const fixtures = FixtureView.init(get,element,teamCards,() => ({teams:result,individual:individualResult,roster}), () => !get("editor").hidden,memberEditor);
   const images = TeamImage.init(get);
   get("save-teams-image").addEventListener("click", () => images.open({
     title:individualResult ? "개인전 참가자" : "팀편성 결과",
